@@ -9,6 +9,7 @@ import Tilde from './Tilde.jsx'
 // columnas: [{ clave, titulo, num (alinea a la derecha en mono), render(fila) }]
 // Si se pasa onSeleccionar, las filas llevan checkbox y la elegida se pinta lime.
 // Maneja sola los estados: cargando, error (con Reintentar) y vacío.
+// En celular cada fila se apila como tarjeta: data-label lleva el título de la columna (ver responsive.css).
 export default function DataTable({
   titulo,
   columnas,
@@ -47,7 +48,7 @@ export default function DataTable({
     contenido = <EstadoVacio {...vacio} />
   } else {
     contenido = (
-      <table className={`ac-table${seleccionable ? '' : ' ac-table--lista'}`}>
+      <table className={`ac-table ac-table--apilable${seleccionable ? '' : ' ac-table--lista'}`}>
         <thead>
           <tr>
             {columnas.map((c) => (
@@ -76,7 +77,11 @@ export default function DataTable({
                 }}
               >
                 {columnas.map((c, i) => (
-                  <td key={c.clave} className={c.num ? 'num' : c.clave === 'acciones' ? 'acciones' : undefined}>
+                  <td
+                    key={c.clave}
+                    className={c.num ? 'num' : c.clave === 'acciones' ? 'acciones' : undefined}
+                    data-label={c.titulo}
+                  >
                     {i === 0 && seleccionable && <span className="ac-check">{elegida && <Tilde />}</span>}
                     {c.render ? c.render(fila) : fila[c.clave]}
                   </td>

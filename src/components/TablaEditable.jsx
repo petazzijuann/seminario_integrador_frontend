@@ -7,7 +7,7 @@ export default function TablaEditable({ columnas, filas, getKey = (_, i) => i, v
   }
 
   return (
-    <table className="ac-table ac-table--lista">
+    <table className="ac-table ac-table--lista ac-table--apilable">
       <thead>
         <tr>
           {columnas.map((c) => (
@@ -21,7 +21,11 @@ export default function TablaEditable({ columnas, filas, getKey = (_, i) => i, v
         {filas.map((fila, i) => (
           <tr key={getKey(fila, i)}>
             {columnas.map((c) => (
-              <td key={c.clave} className={c.num ? 'num' : c.clave === 'acciones' ? 'acciones' : undefined}>
+              <td
+                key={c.clave}
+                className={c.num ? 'num' : c.clave === 'acciones' ? 'acciones' : undefined}
+                data-label={c.titulo}
+              >
                 {c.render(fila, i)}
               </td>
             ))}
