@@ -33,7 +33,6 @@
 /* Tableros (Rinde, Insumos): los dos gráficos se apilan */
 @media (max-width: 900px) {
   .ac-tablero__graficos { grid-template-columns: minmax(0, 1fr); }
-  .ac-filtros { margin-top: var(--space-6); }
 }
 
 /* ---------- Celular (≤ 640px) ---------- */
@@ -90,6 +89,6 @@
   .ac-indicador { padding: var(--space-3); }
   .ac-indicador__valor { font-size: 22px; }
   .ac-grafico__area, .ac-grafico__eje-x { margin-left: 44px; }
-  .ac-filtros .ac-boton-menu { flex: 1 1 auto; }
-  .ac-filtros .ac-btn { width: 100%; }
+  .ac-selector__campos .ac-boton-menu { flex: 1 1 auto; }
+  .ac-selector__campos .ac-btn { width: 100%; }
 }

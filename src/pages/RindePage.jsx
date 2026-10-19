@@ -23,42 +23,59 @@ import {
   porcentaje,
   toneladas,
 } from '../utils/format.js'
-import { agruparCampanias, promedio, RUBROS } from '../utils/rinde.js'
+import { agruparCampanias, anterioresDelMismoLote, otrasDelMismoLote, promedio, resumir, RUBROS, textoLotes } from '../utils/rinde.js'
 
 // Rinde: tablero de las campañas cerradas. Cuánto se invirtió, cuánto se produjo,
-// cuánto costó cada tonelada, y cómo se compara con las campañas anteriores.
+// cuánto costó cada tonelada, y cómo se compara con las campañas anteriores DEL MISMO LOTE
+// (Lote 1 2026 contra Lote 1 2025).
 // No hay precio de venta en el sistema, así que no se calcula ingreso: el foco es eficiencia y costo.
 
 const MAX_EN_GRAFICO = 12
 
 export default function RindePage() {
   const rinde = useFetch(rindeService.listar, [])
+  const [loteId, setLoteId] = useState('todos')
   const [cultivo, setCultivo] = useState('todos')
   const [elegidaId, setElegidaId] = useState(null)
   const [comparar, setComparar] = useState('anterior') // 'anterior' | 'promedio'
 
   const filas = rinde.data ?? []
+  const lotes = [...new Map(filas.map((f) => [f.lote.id, f.lote])).values()].sort((a, b) => a.nroLote - b.nroLote)
   const cultivos = [...new Set(filas.map((f) => f.semilla.nombre))].sort((a, b) => a.localeCompare(b))
-  const filtradas = cultivo === 'todos' ? filas : filas.filter((f) => f.semilla.nombre === cultivo)
+
+  // El cultivo filtra todo (incluida la comparación); el lote además recorta el histórico de la página.
+  const delCultivo = cultivo === 'todos' ? filas : filas.filter((f) => f.semilla.nombre === cultivo)
+  const filtradas = loteId === 'todos' ? delCultivo : delCultivo.filter((f) => f.lote.id === loteId)
   const campanias = agruparCampanias(filtradas)
 
   // Por defecto se mira la campaña más reciente; si el filtro la saca, también.
   const elegida = campanias.find((c) => c.id === elegidaId) ?? campanias.at(-1) ?? null
-  const indice = campanias.indexOf(elegida)
-  const anterior = indice > 0 ? campanias[indice - 1] : null
-  const otras = campanias.filter((c) => c.id !== elegida?.id)
 
-  // Contra qué se compara cada indicador.
+  // Comparación: siempre contra el mismo lote. La "anterior" es la campaña previa de cada lote de la elegida.
+  const previas = elegida ? anterioresDelMismoLote(delCultivo, elegida) : []
+  const anterior = previas.length ? resumir(previas) : null
+  const campaniasPrevias = agruparCampanias(previas)
+  const etiquetaAnterior =
+    campaniasPrevias.length === 1 ? campaniasPrevias[0].corta : campaniasPrevias.length ? 'la anterior de cada lote' : 'la anterior'
+  const otras = elegida ? otrasDelMismoLote(delCultivo, elegida) : []
+
   function contra(clave) {
     if (comparar === 'promedio') {
-      return { anterior: otras.length ? promedio(otras, clave) : null, contra: 'el promedio' }
+      return { anterior: otras.length ? promedio(otras, clave) : null, contra: 'el promedio del lote' }
     }
-    return { anterior: anterior?.resumen[clave] ?? null, contra: anterior?.corta ?? 'la anterior' }
+    return { anterior: anterior?.[clave] ?? null, contra: etiquetaAnterior }
   }
   const variacion = (clave, mejor) => ({ actual: elegida?.resumen[clave] ?? null, mejor, ...contra(clave) })
   const notaPromedio = (clave, formato) => {
     const p = promedio(otras, clave)
-    return p === null ? undefined : `Promedio del resto: ${formato(p)}`
+    return p === null ? undefined : `Promedio del lote: ${formato(p)}`
+  }
+
+  let textoComparacion = 'Es la primera campaña cerrada de este lote: no hay contra qué comparar.'
+  if (comparar === 'promedio' && otras.length) {
+    textoComparacion = `Contra el promedio de ${otras.length} ${otras.length === 1 ? 'campaña' : 'campañas'} del mismo lote.`
+  } else if (comparar === 'anterior' && campaniasPrevias.length) {
+    textoComparacion = `Contra ${campaniasPrevias.map((c) => `${c.corta} · ${c.periodo} (${c.textoLotes})`).join(', ')}.`
   }
 
   const enGrafico = campanias.slice(-MAX_EN_GRAFICO)
@@ -113,43 +130,52 @@ export default function RindePage() {
 
   return (
     <>
-      {header}
+      <section className="ac-cream ac-selector" aria-label="Elegir campaña">
+        <div className="ac-selector__campos">
+          <BotonMenu
+            etiqueta={`Lote: ${loteId === 'todos' ? 'Todos' : `Lote ${lotes.find((l) => l.id === loteId)?.nroLote}`}`}
+            titulo="Lote"
+            valor={loteId}
+            onElegir={setLoteId}
+            opciones={[{ valor: 'todos', etiqueta: 'Todos los lotes' }, ...lotes.map((l) => ({ valor: l.id, etiqueta: `Lote ${l.nroLote} · ${l.zona}` }))]}
+          />
+          <BotonMenu
+            etiqueta={`Campaña: ${elegida.corta} · ${elegida.periodo}`}
+            titulo="Campaña"
+            valor={elegida.id}
+            onElegir={setElegidaId}
+            opciones={[...campanias].reverse().map((c) => ({ valor: c.id, etiqueta: c.nombre }))}
+          />
+          <BotonMenu
+            etiqueta={`Cultivo: ${cultivo === 'todos' ? 'Todos' : cultivo}`}
+            titulo="Cultivo"
+            valor={cultivo}
+            onElegir={setCultivo}
+            opciones={[{ valor: 'todos', etiqueta: 'Todos' }, ...cultivos.map((c) => ({ valor: c, etiqueta: c }))]}
+          />
+          <BotonMenu
+            etiqueta={`Comparar con: ${comparar === 'promedio' ? 'promedio del lote' : 'campaña anterior del lote'}`}
+            titulo="Comparar con"
+            valor={comparar}
+            onElegir={setComparar}
+            opciones={[
+              { valor: 'anterior', etiqueta: 'Campaña anterior del mismo lote' },
+              { valor: 'promedio', etiqueta: 'Promedio del mismo lote' },
+            ]}
+          />
+        </div>
+        <p className="small ac-selector__texto">{textoComparacion}</p>
+      </section>
 
-      {/* Filtros: una fila arriba de todo; afectan a todos los números de la página. */}
-      <div className="ac-filtros">
-        <BotonMenu
-          etiqueta={`Cultivo: ${cultivo === 'todos' ? 'Todos' : cultivo}`}
-          titulo="Cultivo"
-          valor={cultivo}
-          onElegir={setCultivo}
-          opciones={[{ valor: 'todos', etiqueta: 'Todos' }, ...cultivos.map((c) => ({ valor: c, etiqueta: c }))]}
-        />
-        <BotonMenu
-          etiqueta={`Campaña: ${elegida.corta}`}
-          titulo="Campaña"
-          valor={elegida.id}
-          onElegir={setElegidaId}
-          opciones={[...campanias].reverse().map((c) => ({ valor: c.id, etiqueta: c.nombre }))}
-        />
-        <BotonMenu
-          etiqueta={`Comparar con: ${comparar === 'promedio' ? 'promedio' : 'anterior'}`}
-          titulo="Comparar con"
-          valor={comparar}
-          onElegir={setComparar}
-          opciones={[
-            { valor: 'anterior', etiqueta: 'Campaña anterior' },
-            { valor: 'promedio', etiqueta: 'Promedio del resto' },
-          ]}
-        />
-      </div>
+      {header}
 
       <section className="ac-cream ac-cream--big ac-tablero__seccion">
         <div className="ac-toolbar">
           <div>
             <span className="ac-eyebrow" style={{ color: 'var(--ink-muted)' }}>
-              {elegida.cultivos.join(' · ')} · {hectareas(r.superficie)}
+              {elegida.textoLotes} · {elegida.cultivos.join(' · ')} · {hectareas(r.superficie)}
             </span>
-            <h2 className="ac-display display-m">Campaña {elegida.nombre.replace(/^C\d+ · /, '')}</h2>
+            <h2 className="ac-display display-m">Campaña {elegida.periodo}</h2>
           </div>
           <span className="ac-eyebrow" style={{ color: 'var(--ink-muted)' }}>
             {elegida.corta} · inicio {fecha(elegida.campania.fecha)}
@@ -251,13 +277,14 @@ export default function RindePage() {
 
       <div className="ac-tablero__seccion">
         <DataTable
-          titulo="Histórico de campañas"
+          titulo={loteId === 'todos' ? 'Histórico de campañas' : `Histórico del ${textoLotes(filtradas)}`}
           getId={(c) => c.id}
           filas={[...campanias].reverse()}
           seleccionadaId={elegida.id}
           onSeleccionar={(c) => setElegidaId(c.id)}
           columnas={[
-            { clave: 'campania', titulo: 'Campaña', render: (c) => c.nombre },
+            { clave: 'campania', titulo: 'Campaña', render: (c) => `${c.corta} · ${c.periodo}` },
+            { clave: 'lote', titulo: 'Lote', render: (c) => c.textoLotes },
             { clave: 'cultivo', titulo: 'Cultivo', render: (c) => c.cultivos.join(', ') },
             { clave: 'superficie', titulo: 'Superficie', num: true, render: (c) => hectareas(c.resumen.superficie) },
             { clave: 'produccion', titulo: 'Producción', num: true, render: (c) => toneladas(Math.round(c.resumen.produccionT * 10) / 10) },

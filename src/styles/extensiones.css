@@ -128,10 +128,12 @@ select.ac-input { cursor: pointer; }
 .ac-oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* Tableros (Rinde, Insumos) */
-.ac-filtros { display: flex; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-7); }
-.ac-filtros .ac-boton-menu .ac-menu { left: 0; right: auto; max-height: 60vh; overflow-y: auto; }
+/* Selector de campaña del tablero de Rinde: arriba de todo, debajo de la barra de navegación */
+.ac-selector { display: grid; gap: var(--space-3); margin-top: var(--space-5); padding: var(--space-4) var(--space-5); border-radius: var(--radius-md); }
+.ac-selector__campos { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+.ac-selector .ac-boton-menu .ac-menu { left: 0; right: auto; max-height: 60vh; overflow-y: auto; }
+.ac-selector__texto { margin: 0; color: var(--ink-muted); }
 .ac-tablero__seccion { margin-top: var(--space-5); }
-.ac-filtros + .ac-tablero__seccion { margin-top: var(--space-4); }
 .ac-tablero__bajada { margin: var(--space-1) 0 var(--space-5); color: var(--ink-muted); }
 .ac-tablero__graficos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); margin-top: var(--space-5); }
 .ac-tablero__reparto { display: grid; gap: var(--space-4); margin-top: var(--space-6); padding-top: var(--space-5); border-top: 1px solid var(--line-cream); }

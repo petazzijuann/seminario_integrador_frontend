@@ -54,6 +54,14 @@ export function resumir(lotes) {
   }
 }
 
+// Orden cronológico de campañas: por fecha de inicio y, si empatan, por id.
+const compararCampanias = (a, b) => String(a.fecha).localeCompare(String(b.fecha)) || a.id - b.id
+
+export const textoLotes = (lotes) => {
+  const nros = [...new Set(lotes.map((l) => l.lote.nroLote))].sort((a, b) => a - b)
+  return `${nros.length === 1 ? 'Lote' : 'Lotes'} ${nros.join(', ')}`
+}
+
 // Agrupa las filas por campaña, en orden cronológico (la más vieja primero).
 export function agruparCampanias(filas) {
   const grupos = new Map()
@@ -64,14 +72,35 @@ export function agruparCampanias(filas) {
   }
 
   return [...grupos.values()]
-    .sort((a, b) => String(a.campania.fecha).localeCompare(String(b.campania.fecha)) || a.id - b.id)
+    .sort((a, b) => compararCampanias(a.campania, b.campania))
     .map((g) => ({
       ...g,
       corta: `C${g.id}`,
-      nombre: `C${g.id} · ${nombreCampania(g.campania.fecha)} ${g.campania.temporada}`,
+      periodo: `${nombreCampania(g.campania.fecha)} ${g.campania.temporada}`,
+      nombre: `C${g.id} · ${nombreCampania(g.campania.fecha)} ${g.campania.temporada} · ${textoLotes(g.lotes)}`,
+      textoLotes: textoLotes(g.lotes),
       cultivos: [...new Set(g.lotes.map((l) => l.semilla.nombre))],
       resumen: resumir(g.lotes),
     }))
+}
+
+// Histórico del mismo lote: para cada lote de la campaña elegida, su campaña inmediatamente
+// anterior (Lote 1 2026 → Lote 1 2025). Devuelve las filas de esas campañas, solo de esos lotes.
+export function anterioresDelMismoLote(filas, campania) {
+  const previas = []
+  for (const actual of campania.lotes) {
+    const delLote = filas
+      .filter((f) => f.lote.id === actual.lote.id && compararCampanias(f.campania, campania.campania) < 0)
+      .sort((a, b) => compararCampanias(a.campania, b.campania))
+    if (delLote.length) previas.push(delLote.at(-1))
+  }
+  return previas
+}
+
+// Todas las otras campañas de los mismos lotes (para el promedio del lote).
+export function otrasDelMismoLote(filas, campania) {
+  const lotes = new Set(campania.lotes.map((l) => l.lote.id))
+  return agruparCampanias(filas.filter((f) => lotes.has(f.lote.id) && f.campania.id !== campania.id))
 }
 
 // Promedio de un indicador entre campañas (ignora las que no lo tienen).
