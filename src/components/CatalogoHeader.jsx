@@ -1,7 +1,7 @@
 // Ficha: components/CatalogoHeader.md
 // Encabezado de los catálogos (Lotes, Semillas, Insumos, Labores). No usa el mosaico:
 // PageHeader queda reservado para la entrada de los casos de uso.
-export default function CatalogoHeader({ eyebrow = 'Catálogo', titulo, bajada, acciones }) {
+export default function CatalogoHeader({ eyebrow = '', titulo, bajada, acciones }) {
   return (
     <header className="ac-catalogo-head">
       <div>
