@@ -7,6 +7,7 @@ import EstadoTag from '../components/EstadoTag.jsx'
 import Field from '../components/Field.jsx'
 import FormDialog from '../components/FormDialog.jsx'
 import Mensaje from '../components/Mensaje.jsx'
+import PageHeader from '../components/PageHeader.jsx'
 import { useCrud } from '../hooks/useCrud.js'
 import { lotesService } from '../services/lotes.js'
 import { cantidad, hectareas, parsearNumero } from '../utils/format.js'
@@ -79,9 +80,18 @@ export default function LotesPage() {
 
   return (
     <>
-      <CatalogoHeader
-        titulo="Lotes"
+      <PageHeader
+        lineas={['Catálogo', 'Lotes']}
         bajada="Superficie, distancia entre surcos y zona de cada lote. El estado lo cambian los casos de uso."
+        dato={{
+          rotulo: 'Lotes',
+          valor: filas.loading ? '…' : filas.length,
+          barras: filas.map((a) => ({ etiqueta: `L${a.nroLote}`, valor: Number(a.superficie) })),
+          pie: hectareas(filas.reduce((t, a) => t + Number(a.superficie), 0)),
+        }}
+      />
+
+      <CatalogoHeader
         acciones={
           <>
             <Button variante="outline" to="/lotes/asignar">
