@@ -112,7 +112,8 @@ select.ac-input { cursor: pointer; }
 /* AppNav: menú desplegable de Catálogos */
 .ac-nav__links { position: relative; }
 .ac-nav__menu { position: absolute; top: calc(100% + var(--space-3)); right: 0; z-index: 40; }
-.ac-nav__links .ac-nav__menu-wrap { position: relative; }
+/* display: flex para que el link quede a la misma altura que el resto (el padding y el borde no cuentan dentro de un span inline) */
+.ac-nav__links .ac-nav__menu-wrap { position: relative; display: flex; }
 
 /* Menú flotante pegado a un botón (Ordenar / Filtrar) */
 .ac-boton-menu { position: relative; }
