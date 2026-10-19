@@ -55,3 +55,16 @@ export function parsearNumero(texto) {
   if (limpio === '') return NaN
   return Number(limpio)
 }
+
+export const pesosPorHa = (v) => (valorVacio(v) ? '—' : `${pesos(v)}/ha`)
+export const pesosPorTonelada = (v) => (valorVacio(v) ? '—' : `${pesos(v)}/t`)
+
+// Para ejes y tarjetas chicas: $1,2 M · $845 mil · 3,2 mil kg.
+export function compacto(valor) {
+  const n = Number(valor)
+  if (valorVacio(valor)) return '—'
+  const abs = Math.abs(n)
+  if (abs >= 1_000_000) return `${numeroAuto(n / 1_000_000, 1)} M`
+  if (abs >= 1_000) return `${numeroAuto(n / 1_000, 1)} mil`
+  return numeroAuto(n, 0)
+}

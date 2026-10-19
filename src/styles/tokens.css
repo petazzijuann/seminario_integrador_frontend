@@ -57,6 +57,12 @@
   --font-display: Fraunces, Georgia, serif;
   --font-sans: Figtree, "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  /* Series de los gráficos (rubros del gasto). Van siempre sobre tarjeta crema, por eso no cambian con el tema.
+     Validadas con el script de dataviz: banda de luminosidad, croma y separación para daltonismo. */
+  --serie-1: #1f7a55;
+  --serie-2: #6a9e1f;
+  --serie-3: #3f6fb0;
+  --serie-4: #c97a2a;
 }
 
 .display-xl { font-family: var(--font-display); font-size: 56px; line-height: 1.05; font-weight: 400; letter-spacing: -1px; font-variation-settings: "opsz" 144; }

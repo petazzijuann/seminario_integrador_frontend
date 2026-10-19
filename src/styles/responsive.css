@@ -30,6 +30,12 @@
   .ac-catalogo-head { margin: var(--space-6) 0 var(--space-5); }
 }
 
+/* Tableros (Rinde, Insumos): los dos gráficos se apilan */
+@media (max-width: 900px) {
+  .ac-tablero__graficos { grid-template-columns: minmax(0, 1fr); }
+  .ac-filtros { margin-top: var(--space-6); }
+}
+
 /* ---------- Celular (≤ 640px) ---------- */
 @media (max-width: 640px) {
   .ac-mosaic__line { font-size: 34px; }
@@ -78,4 +84,12 @@
   .ac-table--apilable tbody tr[aria-selected="true"] td { background: transparent; border-radius: 0; }
   .ac-table--apilable tbody tr[aria-selected="true"] { background: var(--lime); border-radius: var(--radius-sm); }
   .ac-table--apilable tbody tr[aria-selected="true"] td::before { color: var(--ink); }
+
+  /* Tableros: indicadores de a dos, filtros a lo ancho */
+  .ac-indicadores, .ac-indicadores--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+  .ac-indicador { padding: var(--space-3); }
+  .ac-indicador__valor { font-size: 22px; }
+  .ac-grafico__area, .ac-grafico__eje-x { margin-left: 44px; }
+  .ac-filtros .ac-boton-menu { flex: 1 1 auto; }
+  .ac-filtros .ac-btn { width: 100%; }
 }
