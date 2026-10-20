@@ -10,6 +10,7 @@ import LotesPage from './pages/LotesPage.jsx'
 import RegistrarCosechaPage from './pages/RegistrarCosechaPage.jsx'
 import RegistrarLaborPage from './pages/RegistrarLaborPage.jsx'
 import RegistrarSiembraPage from './pages/RegistrarSiembraPage.jsx'
+import RindePage from './pages/RindePage.jsx'
 import SemillasPage from './pages/SemillasPage.jsx'
 import StockPage from './pages/StockPage.jsx'
 import LandingPage from './pages/LandingPage.jsx'
@@ -28,6 +29,8 @@ export default function App() {
             <Route path="/labores" element={<RegistrarLaborPage />} />
             <Route path="/cosechas" element={<RegistrarCosechaPage />} />
             <Route path="/campanias" element={<CerrarCampaniaPage />} />
+            <Route path="/insumos" element={<StockPage />} />
+            <Route path="/rinde" element={<RindePage />} />
             <Route path="/catalogos/semillas" element={<SemillasPage />} />
             <Route path="/catalogos/insumos" element={<InsumosPage />} />
             <Route path="/catalogos/labores" element={<LaboresCatalogoPage />} />

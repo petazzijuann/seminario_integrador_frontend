@@ -58,6 +58,7 @@ select.ac-input { cursor: pointer; }
 
 /* Tablas: celda de acciones e inputs dentro de la tabla */
 .ac-table td.acciones { text-align: right; white-space: nowrap; }
+.ac-table td.num { white-space: nowrap; }
 .ac-table td.acciones .ac-btn + .ac-btn { margin-left: var(--space-2); }
 .ac-table--lista tbody tr { cursor: default; }
 .ac-table--lista tbody tr:hover td { background: transparent; }
@@ -111,8 +112,85 @@ select.ac-input { cursor: pointer; }
 /* AppNav: menú desplegable de Catálogos */
 .ac-nav__links { position: relative; }
 .ac-nav__menu { position: absolute; top: calc(100% + var(--space-3)); right: 0; z-index: 40; }
-.ac-nav__links .ac-nav__menu-wrap { position: relative; }
+/* display: flex para que el link quede a la misma altura que el resto (el padding y el borde no cuentan dentro de un span inline) */
+.ac-nav__links .ac-nav__menu-wrap { position: relative; display: flex; }
 
 /* Menú flotante pegado a un botón (Ordenar / Filtrar) */
 .ac-boton-menu { position: relative; }
 .ac-boton-menu .ac-menu { position: absolute; top: calc(100% + var(--space-2)); right: 0; z-index: 30; }
+
+.ac-tag { white-space: nowrap; }
+
+/* Tags de la situación del stock (Insumos). "Stock bajo" y "Sin stock" siempre llevan la palabra. */
+.ac-tag--bajo { background: var(--steel-soft); color: var(--ink); }
+.ac-tag--sin-stock { background: color-mix(in srgb, var(--danger) 35%, var(--surface-cream)); color: var(--ink); }
+
+/* Texto solo para lectores de pantalla */
+.ac-oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Tableros (Rinde, Insumos) */
+/* Selector de campaña del tablero de Rinde: arriba de todo, debajo de la barra de navegación */
+.ac-selector { display: grid; gap: var(--space-3); margin-top: var(--space-5); padding: var(--space-4) var(--space-5); border-radius: var(--radius-md); }
+.ac-selector__campos { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+.ac-selector .ac-boton-menu .ac-menu { left: 0; right: auto; max-height: 60vh; overflow-y: auto; }
+.ac-selector__texto { margin: 0; color: var(--ink-muted); }
+.ac-tablero__seccion { margin-top: var(--space-5); }
+.ac-tablero__bajada { margin: var(--space-1) 0 var(--space-5); color: var(--ink-muted); }
+.ac-tablero__graficos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); margin-top: var(--space-5); }
+.ac-tablero__reparto { display: grid; gap: var(--space-4); margin-top: var(--space-6); padding-top: var(--space-5); border-top: 1px solid var(--line-cream); }
+
+/* Indicador: tarjeta de un número */
+.ac-indicadores { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-4); }
+.ac-indicadores--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ac-indicador { display: grid; gap: var(--space-1); align-content: start; padding: var(--space-4); border-radius: var(--radius-md); border: 1px solid var(--line-cream); }
+.ac-indicador__rotulo { color: var(--ink-muted); }
+.ac-indicador__valor { font: 600 28px/1.15 var(--font-sans); color: var(--ink); }
+.ac-indicador__nota { color: var(--ink-muted); }
+.ac-variacion { justify-self: start; font: 600 12px var(--font-sans); padding: 2px var(--space-2); border-radius: 999px; background: var(--line-cream); color: var(--ink); }
+.ac-variacion--bien { background: var(--lime); }
+.ac-variacion--mal { background: color-mix(in srgb, var(--danger) 35%, var(--surface-cream)); }
+
+/* Gráficos de columnas (HTML/CSS). Grilla y ejes en hairline recesiva; los datos son lo único fuerte. */
+.ac-grafico { display: grid; gap: var(--space-2); }
+.ac-grafico__area { position: relative; height: 220px; margin-left: 56px; margin-top: var(--space-5); }
+.ac-grafico__grilla { position: absolute; inset: 0; pointer-events: none; }
+.ac-grafico__linea { position: absolute; left: 0; right: 0; border-top: 1px solid var(--line-cream); }
+.ac-grafico__linea span { position: absolute; right: calc(100% + var(--space-2)); transform: translateY(-50%); font: 400 11px var(--font-mono); color: var(--ink-muted); white-space: nowrap; }
+.ac-grafico__cols { position: absolute; inset: 0; display: flex; align-items: flex-end; gap: 2px; }
+.ac-grafico__col { position: relative; flex: 1 1 0; min-width: 0; height: 100%; display: flex; align-items: flex-end; justify-content: center;
+  background: none; border: 0; padding: 0; cursor: pointer; border-radius: var(--radius-sm); }
+.ac-grafico__col:hover, .ac-grafico__col:focus-visible { background: color-mix(in srgb, var(--lime) 25%, transparent); }
+.ac-grafico__col:focus-visible { outline: 2px solid var(--ink); outline-offset: 0; }
+.ac-grafico__barra { width: min(24px, 70%); background: var(--steel-soft); border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+.ac-grafico__barra--elegida { background: var(--ink); }
+.ac-grafico__pila { width: min(24px, 70%); display: flex; flex-direction: column-reverse; gap: 2px; border-radius: var(--radius-sm) var(--radius-sm) 0 0; overflow: hidden; }
+.ac-grafico__tramo { flex-basis: 0; min-height: 2px; }
+.ac-grafico__col:not(.ac-grafico__col--elegida) .ac-grafico__pila { opacity: .55; }
+.ac-grafico__valor { position: absolute; left: 50%; transform: translate(-50%, calc(-1 * var(--space-1))); font: 500 12px var(--font-mono); color: var(--ink); white-space: nowrap; pointer-events: none; }
+.ac-grafico__sin-dato { font: 400 11px var(--font-mono); color: var(--ink-muted); margin-bottom: var(--space-1); }
+.ac-grafico__eje-x { display: flex; gap: 2px; margin-left: 56px; border-top: 1.5px solid var(--ink); padding-top: var(--space-2); }
+.ac-grafico__eje-x span { flex: 1 1 0; min-width: 0; text-align: center; font: 400 11px var(--font-mono); color: var(--ink-muted); overflow: hidden; text-overflow: ellipsis; }
+.ac-grafico__eje-x span.elegida { color: var(--ink); font-weight: 500; }
+
+/* Tooltip: el valor manda, el nombre acompaña */
+.ac-tooltip { position: absolute; bottom: calc(100% + var(--space-2)); left: 50%; transform: translateX(-50%); z-index: 20; display: grid; gap: 2px;
+  min-width: 140px; padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--ink); color: var(--surface-cream);
+  font: 400 12px var(--font-sans); text-align: left; white-space: nowrap; box-shadow: var(--shadow-float); pointer-events: none; }
+.ac-tooltip b { font: 500 14px var(--font-mono); }
+.ac-tooltip--izq { left: 0; transform: none; }
+.ac-tooltip--der { left: auto; right: 0; transform: none; }
+.ac-tooltip__fila { display: flex; align-items: center; gap: var(--space-2); }
+.ac-tooltip__fila i { width: 10px; height: 2px; flex: none; }
+.ac-tooltip__fila b { margin-left: auto; padding-left: var(--space-3); font-size: 12px; }
+
+/* Leyenda y barra de reparto */
+.ac-leyenda { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); list-style: none; margin: 0; padding: 0; font: 500 13px var(--font-sans); color: var(--ink); }
+.ac-leyenda li { display: flex; align-items: center; gap: var(--space-2); }
+.ac-leyenda i, .ac-reparto__leyenda i { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+.ac-reparto { display: grid; gap: var(--space-4); }
+.ac-reparto__barra { display: flex; gap: 2px; height: var(--space-5); border-radius: var(--radius-sm); overflow: hidden; background: var(--line-cream); }
+.ac-reparto__barra span { flex-basis: 0; min-width: 2px; }
+.ac-reparto__leyenda { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-3) var(--space-5); list-style: none; margin: 0; padding: 0; }
+.ac-reparto__leyenda li { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0 var(--space-2); font: 500 14px var(--font-sans); }
+.ac-reparto__leyenda b { grid-column: 2; font-size: 16px; }
+.ac-reparto__pct { grid-column: 3; grid-row: 1 / 3; color: var(--ink-muted); font-size: 13px; }

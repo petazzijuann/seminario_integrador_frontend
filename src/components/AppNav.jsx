@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import FilterMenu from './FilterMenu.jsx'
 
 // Ficha: components/AppNav.md
-// Las 5 secciones fijas del diseño + "Catálogos" (Semillas, Insumos, Labores) en un FilterMenu.
+// Las secciones fijas (los 5 casos de uso + Insumos y Rinde) + "Catálogos" (Semillas, Insumos, Labores) en un FilterMenu.
 // NavLink pone aria-current="page" en la sección activa, que es lo que subraya el CSS.
 
 const SECCIONES = [
@@ -12,6 +12,8 @@ const SECCIONES = [
   { a: '/labores', etiqueta: 'Labores' },
   { a: '/cosechas', etiqueta: 'Cosechas' },
   { a: '/campanias', etiqueta: 'Campañas' },
+  { a: '/insumos', etiqueta: 'Insumos' },
+  { a: '/rinde', etiqueta: 'Rinde' },
 ]
 
 const CATALOGOS = [
