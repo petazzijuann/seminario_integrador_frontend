@@ -13,6 +13,7 @@ import RegistrarSiembraPage from './pages/RegistrarSiembraPage.jsx'
 import RindePage from './pages/RindePage.jsx'
 import SemillasPage from './pages/SemillasPage.jsx'
 import StockPage from './pages/StockPage.jsx'
+import LandingPage from './pages/LandingPage.jsx'
 
 export default function App() {
   return (
@@ -21,7 +22,7 @@ export default function App() {
         <AppNav usuario="Agustín" iniciales="AR" />
         <main>
           <Routes>
-            <Route path="/" element={<Navigate to="/lotes" replace />} />
+            <Route path="/" element={<LandingPage />} />
             <Route path="/lotes" element={<LotesPage />} />
             <Route path="/lotes/asignar" element={<AsignarLotePage />} />
             <Route path="/siembras" element={<RegistrarSiembraPage />} />
