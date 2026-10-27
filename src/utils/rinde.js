@@ -14,8 +14,11 @@ export const RUBROS = [
 const dividir = (a, b) => (b > 0 ? a / b : null)
 
 // Totales e indicadores de un conjunto de lotes (una campaña, o una campaña filtrada por cultivo).
+// Con doble cultivo el mismo lote viene en dos filas: su superficie física se cuenta una sola vez
+// por campaña, pero la cosechada se suma por cultivo (el rinde promedio es por hectárea cultivada).
 export function resumir(lotes) {
   const costos = { semilla: 0, labores: 0, insumos: 0, percances: 0, total: 0 }
+  const lotesContados = new Set()
   let superficie = 0
   let superficieCosechada = 0
   let produccionKg = 0
@@ -24,7 +27,11 @@ export function resumir(lotes) {
   let labores = 0
 
   for (const l of lotes) {
-    superficie += l.lote.superficie
+    const clave = `${l.campania.id}-${l.lote.id}`
+    if (!lotesContados.has(clave)) {
+      lotesContados.add(clave)
+      superficie += l.lote.superficie
+    }
     sembradoT += l.cantidadSembrada
     produccionKg += l.produccionKg
     labores += l.cantidadLabores
@@ -86,13 +93,17 @@ export function agruparCampanias(filas) {
 
 // Histórico del mismo lote: para cada lote de la campaña elegida, su campaña inmediatamente
 // anterior (Lote 1 2026 → Lote 1 2025). Devuelve las filas de esas campañas, solo de esos lotes.
+// Se recorre cada lote una vez (con doble cultivo viene en dos filas) y de la campaña anterior se
+// traen todos sus cultivos, no solo uno.
 export function anterioresDelMismoLote(filas, campania) {
   const previas = []
-  for (const actual of campania.lotes) {
+  for (const loteId of new Set(campania.lotes.map((l) => l.lote.id))) {
     const delLote = filas
-      .filter((f) => f.lote.id === actual.lote.id && compararCampanias(f.campania, campania.campania) < 0)
+      .filter((f) => f.lote.id === loteId && compararCampanias(f.campania, campania.campania) < 0)
       .sort((a, b) => compararCampanias(a.campania, b.campania))
-    if (delLote.length) previas.push(delLote.at(-1))
+    if (!delLote.length) continue
+    const ultima = delLote.at(-1).campania.id
+    previas.push(...delLote.filter((f) => f.campania.id === ultima))
   }
   return previas
 }
