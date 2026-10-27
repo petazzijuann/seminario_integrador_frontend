@@ -6,18 +6,24 @@ import Dialog from '../components/Dialog.jsx'
 import DialogCancelar from '../components/DialogCancelar.jsx'
 import DialogError from '../components/DialogError.jsx'
 import EstadoTag from '../components/EstadoTag.jsx'
+import Field from '../components/Field.jsx'
+import FormDialog from '../components/FormDialog.jsx'
 import Mensaje from '../components/Mensaje.jsx'
 import PageHeader from '../components/PageHeader.jsx'
 import Panel from '../components/Panel.jsx'
 import Stepper from '../components/Stepper.jsx'
 import { useFetch } from '../hooks/useFetch.js'
 import { campaniasService } from '../services/campanias.js'
+import { semillasService } from '../services/semillas.js'
 import { fecha, kilos, nombreCampania, porcentaje, toneladas } from '../utils/format.js'
 
-// CUU5 – Cerrar campaña
+// CUU5 – Cerrar campaña (+ CUR 6.a: agregar el segundo cultivo de un lote cosechado)
 const PASOS = ['Seleccionar campaña', 'Revisar campaña', 'Confirmar cierre']
 
-// GET /campanias devuelve una fila por lote: se agrupan por campaña.
+// Con doble cultivo el mismo lote viene en dos filas: para contarlo o nombrarlo va una sola vez.
+const lotesUnicos = (lotes) => [...new Map(lotes.map((l) => [l.id, l])).values()]
+
+// GET /campanias devuelve una fila por cultivo: se agrupan por campaña.
 function agruparPorCampania(asignaciones) {
   const grupos = new Map()
   for (const a of asignaciones) {
@@ -25,10 +31,24 @@ function agruparPorCampania(asignaciones) {
     if (!grupos.has(id)) grupos.set(id, { id, campania: a.campania, asignaciones: [] })
     grupos.get(id).asignaciones.push(a)
   }
-  return [...grupos.values()]
+  return [...grupos.values()].map((g) => ({ ...g, lotes: lotesUnicos(g.asignaciones.map((a) => a.lote)) }))
 }
 
-const listaLotes = (lotes) => lotes.map((l) => `Lote ${l.nroLote}`).join(', ')
+// Numera los cultivos de cada lote (el de menor id es el primero) y deja juntas las filas del mismo lote.
+function numerarCultivos(filas) {
+  const ordenadas = [...filas].sort((a, b) => a.loteSemillaCampaniaId - b.loteSemillaCampaniaId)
+  const cantidad = new Map()
+  const numeradas = ordenadas.map((f) => {
+    const cultivo = (cantidad.get(f.lote.id) ?? 0) + 1
+    cantidad.set(f.lote.id, cultivo)
+    return { ...f, cultivo }
+  })
+  return numeradas
+    .map((f) => ({ ...f, cultivosDelLote: cantidad.get(f.lote.id) }))
+    .sort((a, b) => a.lote.nroLote - b.lote.nroLote || a.cultivo - b.cultivo)
+}
+
+const listaLotes = (lotes) => lotesUnicos(lotes).map((l) => `Lote ${l.nroLote}`).join(', ')
 
 export default function CerrarCampaniaPage() {
   const abiertas = useFetch(campaniasService.listarAbiertas, [])
@@ -36,14 +56,25 @@ export default function CerrarCampaniaPage() {
   const [paso, setPaso] = useState(0)
   const [grupo, setGrupo] = useState(null)
   const [orden, setOrden] = useState('recientes')
-  const [dialogo, setDialogo] = useState(null) // 'confirmar' | 'cancelar' | 'ok' | 'error'
+  // 'confirmar' | 'cancelar' | 'ok' | 'error' | 'segundo' | 'segundoOk' | 'segundoError'
+  const [dialogo, setDialogo] = useState(null)
   const [error, setError] = useState(null)
   const [enviando, setEnviando] = useState(false)
   const [cerrada, setCerrada] = useState(null)
 
+  // Segundo cultivo: fila del primer cultivo del lote, semilla elegida y resultado para el diálogo de éxito.
+  const [primerCultivo, setPrimerCultivo] = useState(null)
+  const [semillaId, setSemillaId] = useState('')
+  const [errorSemilla, setErrorSemilla] = useState('')
+  const [agregado, setAgregado] = useState(null)
+
   // El detalle (siembra y cosecha de cada lote) se pide recién cuando hay una campaña elegida.
   const campaniaId = paso >= 1 ? grupo?.id : null
   const detalle = useFetch(campaniaId ? () => campaniasService.obtener(campaniaId) : null, [campaniaId])
+
+  // Las semillas se piden al abrir el diálogo, así el stock está al día.
+  const eligiendoSemilla = dialogo === 'segundo'
+  const semillas = useFetch(eligiendoSemilla ? semillasService.listarActivas : null, [eligiendoSemilla])
 
   const grupos = agruparPorCampania(abiertas.data ?? []).sort((a, b) => {
     const fa = String(a.campania.fecha ?? '')
@@ -51,8 +82,15 @@ export default function CerrarCampaniaPage() {
     return orden === 'antiguas' ? fa.localeCompare(fb) : fb.localeCompare(fa)
   })
 
-  const lotesDetalle = detalle.data?.lotes ?? []
-  const pendientes = lotesDetalle.filter((l) => l.lote.estado !== 'Cosechado')
+  const lotesDetalle = numerarCultivos(detalle.data?.lotes ?? [])
+  const pendientes = lotesUnicos(lotesDetalle.map((l) => l.lote)).filter((l) => l.estado !== 'Cosechado')
+  // Solo se ofrece en lotes que terminaron su único cultivo de la campaña (el back valida lo mismo).
+  const puedeSegundoCultivo = (l) => l.lote.estado === 'Cosechado' && l.cultivosDelLote === 1
+
+  // Semillas para el segundo cultivo: Activas, con stock y distintas a la del primero.
+  const semillasSegundo = (semillas.data ?? []).filter(
+    (s) => s.estado === 'Activa' && Number(s.stock) > 0 && s.id !== primerCultivo?.semilla.id,
+  )
   // La humedad la va a devolver el back cuando se mergee el cambio pendiente; hasta entonces no viene el campo.
   const faltaHumedad = lotesDetalle.some((l) => !('porcentajeHumedad' in l))
   const nombre = grupo ? nombreCampania(grupo.campania.fecha) : ''
@@ -82,6 +120,36 @@ export default function CerrarCampaniaPage() {
     abiertas.recargar()
   }
 
+  function abrirSegundoCultivo(fila) {
+    setPrimerCultivo(fila)
+    setSemillaId('')
+    setErrorSemilla('')
+    setDialogo('segundo')
+  }
+
+  async function agregarSegundoCultivo() {
+    const semilla = semillasSegundo.find((s) => String(s.id) === semillaId)
+    if (!semilla) {
+      setErrorSemilla('Elegí la semilla del segundo cultivo.')
+      return
+    }
+    setErrorSemilla('')
+    setEnviando(true)
+    try {
+      await campaniasService.agregarSegundoCultivo(grupo.id, { loteId: primerCultivo.lote.id, semillaId: semilla.id })
+      setAgregado({ lote: primerCultivo.lote.nroLote, semilla: semilla.nombre })
+      setDialogo('segundoOk')
+    } catch (err) {
+      setError(err)
+      setDialogo('segundoError')
+    } finally {
+      setEnviando(false)
+    }
+    // Salga bien o mal, se recarga: el lote pudo cambiar de estado o la campaña cerrarse mientras tanto.
+    detalle.recargar()
+    abiertas.recargar()
+  }
+
   function cerrarError() {
     setDialogo(null)
     if (error?.data?.lotes) {
@@ -102,7 +170,7 @@ export default function CerrarCampaniaPage() {
       filas={[
         { rotulo: 'Temporada', valor: grupo.campania.temporada, texto: true },
         { rotulo: 'Inicio', valor: fecha(grupo.campania.fecha) },
-        { rotulo: 'Lotes', valor: listaLotes(grupo.asignaciones.map((a) => a.lote)), texto: true, ancho: true },
+        { rotulo: 'Lotes', valor: listaLotes(grupo.lotes), texto: true, ancho: true },
       ]}
     />
   ) : (
@@ -121,8 +189,8 @@ export default function CerrarCampaniaPage() {
         dato={{
           rotulo: 'Campañas abiertas',
           valor: abiertas.loading ? '…' : grupos.length,
-          barras: grupos.map((g) => ({ etiqueta: `C${g.id}`, valor: g.asignaciones.length })),
-          pie: `${(abiertas.data ?? []).length} lotes en curso`,
+          barras: grupos.map((g) => ({ etiqueta: `C${g.id}`, valor: g.lotes.length })),
+          pie: `${lotesUnicos((abiertas.data ?? []).map((a) => a.lote)).length} lotes en curso`,
         }}
       />
 
@@ -145,9 +213,9 @@ export default function CerrarCampaniaPage() {
                 titulo: 'Lotes',
                 render: (g) => (
                   <span style={{ display: 'inline-flex', gap: 'var(--space-2)', flexWrap: 'wrap', alignItems: 'center' }}>
-                    {g.asignaciones.map((a) => (
-                      <span key={a.id}>
-                        Lote {a.lote.nroLote} <EstadoTag estado={a.lote.estado} />
+                    {g.lotes.map((lote) => (
+                      <span key={lote.id}>
+                        Lote {lote.nroLote} <EstadoTag estado={lote.estado} />
                       </span>
                     ))}
                   </span>
@@ -199,7 +267,13 @@ export default function CerrarCampaniaPage() {
             titulo="Lotes de la campaña"
             columnas={[
               { clave: 'lote', titulo: 'Lote', render: (l) => `Lote ${l.lote.nroLote}` },
-              { clave: 'estado', titulo: 'Estado', render: (l) => <EstadoTag estado={l.lote.estado} /> },
+              { clave: 'cultivo', titulo: 'Cultivo', render: (l) => `Cultivo ${l.cultivo}` },
+              {
+                clave: 'estado',
+                titulo: 'Estado',
+                // El estado es del lote: si ya tiene un segundo cultivo, el primero quedó cosechado.
+                render: (l) => <EstadoTag estado={l.cultivo < l.cultivosDelLote ? 'Cosechado' : l.lote.estado} />,
+              },
               { clave: 'semilla', titulo: 'Semilla', render: (l) => l.semilla.nombre },
               { clave: 'sembrado', titulo: 'Sembrado', num: true, render: (l) => (l.cantidadSembrada === null ? '—' : toneladas(l.cantidadSembrada)) },
               {
@@ -213,6 +287,16 @@ export default function CerrarCampaniaPage() {
                 titulo: 'Humedad',
                 num: true,
                 render: (l) => (l.porcentajeHumedad === null || l.porcentajeHumedad === undefined ? '—' : porcentaje(l.porcentajeHumedad)),
+              },
+              {
+                clave: 'acciones',
+                titulo: '',
+                render: (l) =>
+                  puedeSegundoCultivo(l) && (
+                    <Button variante="outline" chico onClick={() => abrirSegundoCultivo(l)}>
+                      Agregar segundo cultivo
+                    </Button>
+                  ),
               },
             ]}
             getId={(l) => l.loteSemillaCampaniaId}
@@ -242,7 +326,7 @@ export default function CerrarCampaniaPage() {
             {!detalle.loading && pendientes.length > 0 && (
               <Mensaje tipo="aviso" titulo="Hay lotes sin cosechar">
                 Solo se puede cerrar con todos los lotes en Cosechado. Pendientes:{' '}
-                {pendientes.map((l) => `Lote ${l.lote.nroLote} (${l.lote.estado})`).join(', ')}.
+                {pendientes.map((l) => `Lote ${l.nroLote} (${l.estado})`).join(', ')}.
               </Mensaje>
             )}
             {!detalle.loading && faltaHumedad && lotesDetalle.length > 0 && (
@@ -319,7 +403,8 @@ export default function CerrarCampaniaPage() {
                 </tr>
               </thead>
               <tbody>
-                {error.data.lotes.map((l) => (
+                {/* El back manda una fila por cultivo: con doble cultivo el lote vendría repetido. */}
+                {[...new Map(error.data.lotes.map((l) => [l.nroLote, l])).values()].map((l) => (
                   <tr key={l.nroLote}>
                     <td>Lote {l.nroLote}</td>
                     <td>
@@ -331,6 +416,66 @@ export default function CerrarCampaniaPage() {
             </table>
           )}
         </DialogError>
+      )}
+
+      {dialogo === 'segundo' && (
+        <FormDialog
+          titulo={`Segundo cultivo en el Lote ${primerCultivo.lote.nroLote}`}
+          guardando={enviando}
+          etiquetaGuardar="Agregar cultivo"
+          onGuardar={agregarSegundoCultivo}
+          onCancelar={() => setDialogo(null)}
+        >
+          <p className="body" style={{ margin: 0 }}>
+            El primer cultivo ({primerCultivo.semilla.nombre}) ya se cosechó. Elegí la semilla del segundo: el lote vuelve a{' '}
+            <b>En uso</b> dentro de la campaña {nombre}.
+          </p>
+          <Field
+            id="semilla-segundo"
+            label="Semilla"
+            as="select"
+            value={semillaId}
+            onChange={(e) => setSemillaId(e.target.value)}
+            disabled={semillas.loading || Boolean(semillas.error)}
+            opciones={[
+              { valor: '', etiqueta: semillas.loading ? 'Cargando…' : 'Elegí una semilla' },
+              ...semillasSegundo.map((s) => ({ valor: String(s.id), etiqueta: `${s.nombre} · ${s.estacion} · ${toneladas(s.stock)}` })),
+            ]}
+            error={
+              errorSemilla ||
+              semillas.error?.message ||
+              (!semillas.loading && semillasSegundo.length === 0 ? 'No hay otras semillas activas con stock. Cargá stock en Semillas.' : '')
+            }
+            ayuda="Solo semillas activas con stock, distintas a la del primer cultivo."
+          />
+        </FormDialog>
+      )}
+
+      {dialogo === 'segundoOk' && (
+        <Dialog
+          variante="ok"
+          eyebrow="Listo"
+          titulo={`Segundo cultivo agregado al Lote ${agregado.lote}`}
+          onCerrar={() => setDialogo(null)}
+          acciones={
+            <>
+              <Button variante="outline" onClick={() => setDialogo(null)}>
+                Cerrar
+              </Button>
+              <Button variante="primary" to="/siembras">
+                Registrar siembra
+              </Button>
+            </>
+          }
+        >
+          <p style={{ margin: 0 }}>
+            El Lote {agregado.lote} volvió a En uso con {agregado.semilla}, ya podés registrar la siembra del segundo cultivo.
+          </p>
+        </Dialog>
+      )}
+
+      {dialogo === 'segundoError' && (
+        <DialogError error={error} titulo="No se pudo agregar el segundo cultivo" onCerrar={() => setDialogo(null)} />
       )}
 
       {dialogo === 'cancelar' && (
