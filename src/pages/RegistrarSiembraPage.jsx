@@ -243,8 +243,13 @@ export default function RegistrarSiembraPage() {
         }}
       />
 
-      <div className="ac-steps-wrap">
+      <div className="ac-steps-wrap ac-steps-wrap--con-accion">
         <Stepper pasos={PASOS} actual={paso} onIr={setPaso} />
+        {paso === 0 && (
+          <Button variante="outline" enFondo to="/siembras/percance">
+            Percance general
+          </Button>
+        )}
       </div>
 
       <div className="ac-cuerpo">

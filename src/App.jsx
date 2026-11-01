@@ -14,6 +14,7 @@ import RindePage from './pages/RindePage.jsx'
 import SemillasPage from './pages/SemillasPage.jsx'
 import StockPage from './pages/StockPage.jsx'
 import LandingPage from './pages/LandingPage.jsx'
+import PercanceGeneralPage from './pages/PercanceGeneralPage.jsx'
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
             <Route path="/lotes" element={<LotesPage />} />
             <Route path="/lotes/asignar" element={<AsignarLotePage />} />
             <Route path="/siembras" element={<RegistrarSiembraPage />} />
+            <Route path="/siembras/percance" element={<PercanceGeneralPage />} />
             <Route path="/labores" element={<RegistrarLaborPage />} />
             <Route path="/cosechas" element={<RegistrarCosechaPage />} />
             <Route path="/campanias" element={<CerrarCampaniaPage />} />
