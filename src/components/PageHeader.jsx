@@ -23,39 +23,59 @@ export default function PageHeader({ lineas, bajada, dato }) {
   )
 }
 
-function TarjetaDato({ rotulo, valor, barras = [], pie }) {
+function TarjetaDato({ rotulo, valor, barras = [], pie, logo, logoAlt = 'Logo de la empresa' }) {
   const visibles = barras.slice(0, 4)
   const maximo = Math.max(...visibles.map((b) => Number(b.valor) || 0), 1)
 
   return (
-    <div className="ac-card ac-data ac-hero__kpi">
-      <div className="ac-eyebrow" style={{ color: 'var(--fg-muted)' }}>
-        {rotulo}
-      </div>
-      <div className="display-xl ac-num" style={{ color: 'var(--lime)' }}>
-        {valor}
-      </div>
-      {visibles.length > 0 && (
-        <>
-          <svg className="ac-kpi__barras" viewBox="0 0 220 80" width="100%" height="80" aria-hidden="true">
-            <line className="ac-kpi__eje" x1="0" y1="79" x2="220" y2="79" strokeWidth="1" />
-            {visibles.map((b, i) => {
-              const alto = Math.max(4, Math.round(((Number(b.valor) || 0) / maximo) * 69))
-              const ultima = i === visibles.length - 1
-              return <rect key={i} className={ultima ? 'f4' : 'f2'} x={6 + i * 54} y={79 - alto} width="34" height={alto} rx="3" />
-            })}
-          </svg>
-          <div className="ac-eyebrow ac-kpi__pie">
-            {visibles.map((b, i) => (
-              <span key={i}>{b.etiqueta}</span>
-            ))}
+    <div className={`ac-card ac-data ac-hero__kpi${logo ? ' ac-hero__kpi--logo' : ''}`}>
+      {logo ? (
+        <div className="ac-hero__marca-empresa">
+          <div className="ac-hero__logo-emblema">
+            <img className="ac-hero__logo" src={logo} alt={logoAlt} />
           </div>
-        </>
-      )}
-      {pie && (
-        <div className="ac-eyebrow" style={{ color: 'var(--fg-muted)', marginTop: 'var(--space-2)' }}>
-          {pie}
+          <div className="ac-hero__logo-texto">
+            <span className="ac-eyebrow">GESTIÓN PARA EL CAMPO</span>
+            <span className="ac-hero__logo-frase">Cada campaña, una nueva oportunidad para crecer.</span>
+          </div>
         </div>
+      ) : (
+        <>
+          <div className="ac-eyebrow" style={{ color: 'var(--fg-muted)' }}>
+            {rotulo}
+          </div>
+          <div className="display-xl ac-num" style={{ color: 'var(--lime)' }}>
+            {valor}
+          </div>
+          {visibles.length > 0 && (
+            <>
+              <svg className="ac-kpi__barras" viewBox="0 0 220 80" width="100%" height="80" aria-hidden="true">
+                <line className="ac-kpi__eje" x1="0" y1="79" x2="220" y2="79" strokeWidth="1" />
+                {visibles.map((b, i) => {
+                  const cantidad = Number(b.valor) || 0
+                  const alto = cantidad > 0 ? Math.max(4, Math.round((cantidad / maximo) * 69)) : 0
+                  const ultima = i === visibles.length - 1
+                  const anchoEspacio = 220 / visibles.length
+                  const x = i * anchoEspacio + (anchoEspacio - 34) / 2
+                  return <rect key={i} className={ultima ? 'f4' : 'f2'} x={x} y={79 - alto} width="34" height={alto} rx="3" />
+                })}
+              </svg>
+              <div
+                className="ac-eyebrow ac-kpi__pie"
+                style={{ gridTemplateColumns: `repeat(${visibles.length}, minmax(0, 1fr))` }}
+              >
+                {visibles.map((b, i) => (
+                  <span key={i}>{b.etiqueta}</span>
+                ))}
+              </div>
+            </>
+          )}
+          {pie && (
+            <div className="ac-eyebrow" style={{ color: 'var(--fg-muted)', marginTop: 'var(--space-2)' }}>
+              {pie}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

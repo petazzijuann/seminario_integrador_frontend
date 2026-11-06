@@ -22,7 +22,7 @@ const CATALOGOS = [
   { valor: '/catalogos/labores', etiqueta: 'Labores de mantenimiento' },
 ]
 
-export default function AppNav({ usuario, iniciales }) {
+export default function AppNav({ usuario, iniciales, rolId, onLogout }) {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const [menuAbierto, setMenuAbierto] = useState(false)
@@ -86,12 +86,16 @@ export default function AppNav({ usuario, iniciales }) {
             />
           )}
         </span>
+        {rolId === 1 && <NavLink to="/usuarios">Usuarios</NavLink>}
       </div>
       <div className="ac-nav__user">
         <span className="ac-avatar" aria-hidden="true">
           {iniciales}
         </span>
-        {usuario}
+        <span>{usuario}</span>
+        <button className="ac-nav__logout" type="button" onClick={onLogout}>
+          Salir
+        </button>
       </div>
     </nav>
   )

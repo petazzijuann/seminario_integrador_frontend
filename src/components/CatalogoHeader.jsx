@@ -11,7 +11,7 @@ export default function CatalogoHeader({ eyebrow = '', titulo, bajada, acciones 
         <h1 className="ac-display display-l">{titulo}</h1>
         {bajada && <p className="body">{bajada}</p>}
       </div>
-      {acciones && <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>{acciones}</div>}
+      {acciones && <div className="ac-catalogo-head__acciones">{acciones}</div>}
     </header>
   )
 }
