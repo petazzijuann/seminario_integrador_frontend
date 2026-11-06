@@ -36,6 +36,7 @@ export default function App() {
         <Route path="/lotes" element={<LotesPage />} />
         <Route path="/lotes/asignar" element={<AsignarLotePage />} />
         <Route path="/siembras" element={<RegistrarSiembraPage />} />
+        <Route path="/siembras/percance" element={<PercanceGeneralPage />} />
         <Route path="/labores" element={<RegistrarLaborPage />} />
         <Route path="/cosechas" element={<RegistrarCosechaPage />} />
         <Route path="/campanias" element={<CerrarCampaniaPage />} />
@@ -80,22 +81,6 @@ function AppLayout() {
       <div className="ac-page">
         <AppNav usuario={nombre} iniciales={iniciales} rolId={rolId} onLogout={salir} />
         <main>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/lotes" element={<LotesPage />} />
-            <Route path="/lotes/asignar" element={<AsignarLotePage />} />
-            <Route path="/siembras" element={<RegistrarSiembraPage />} />
-            <Route path="/siembras/percance" element={<PercanceGeneralPage />} />
-            <Route path="/labores" element={<RegistrarLaborPage />} />
-            <Route path="/cosechas" element={<RegistrarCosechaPage />} />
-            <Route path="/campanias" element={<CerrarCampaniaPage />} />
-            <Route path="/insumos" element={<StockPage />} />
-            <Route path="/rinde" element={<RindePage />} />
-            <Route path="/catalogos/semillas" element={<SemillasPage />} />
-            <Route path="/catalogos/insumos" element={<InsumosPage />} />
-            <Route path="/catalogos/labores" element={<LaboresCatalogoPage />} />
-            <Route path="*" element={<NoEncontrada />} />
-          </Routes>
           {soloLectura ? (
             <>
               <p className="ac-solo-lectura" role="status">Modo consulta: tu rol no permite modificar información.</p>
