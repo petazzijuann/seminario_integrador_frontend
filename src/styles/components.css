@@ -91,6 +91,79 @@
 .ac-field__row .ac-btn { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
 .ac-field__help { font-size: 13px; color: var(--ink-muted); }
 
+/* Login */
+.ac-login { box-sizing: border-box; min-height: 100vh; max-width: 1440px; margin: 0 auto; padding: var(--space-5) clamp(var(--space-5), 7vw, 104px);
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 460px); align-items: center; gap: clamp(var(--space-6), 9vw, 128px); }
+.ac-login__presentacion { min-height: min(640px, calc(100vh - 48px)); display: flex; flex-direction: column; justify-content: space-between; }
+.ac-login__marca { display: inline-flex; align-items: center; gap: var(--space-3); width: fit-content; color: var(--fg); text-decoration: none;
+  font: 500 26px/1 var(--font-display); letter-spacing: -0.03em; }
+.ac-login__marca-icono { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid var(--line-soft); border-radius: var(--radius-md); }
+.ac-login__marca-icono svg { width: 30px; height: 30px; }
+.ac-login__marca-icono path { stroke: var(--lime); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ac-login__mensaje { margin-top: var(--space-6); }
+.ac-login__mensaje .ac-eyebrow { color: var(--lime); }
+.ac-login__mensaje h1 { margin: var(--space-3) 0; font-size: clamp(44px, 4.5vw, 60px); line-height: 1.02; letter-spacing: -0.045em; }
+.ac-login__mensaje h1 span { color: var(--lime); }
+.ac-login__descripcion { max-width: 400px; margin: 0; color: var(--fg-muted); font-size: 16px; line-height: 1.5; }
+.ac-login__ilustracion { position: relative; min-height: 190px; margin-top: var(--space-4); overflow: hidden; border-radius: var(--radius-lg); background: var(--surface); }
+.ac-login__ilustracion svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ac-login__sol { fill: var(--lime); opacity: .9; }
+.ac-login__campo { stroke: var(--lime); stroke-width: 2; }
+.ac-login__campo--uno { opacity: .95; }
+.ac-login__campo--dos { opacity: .55; }
+.ac-login__campo--tres { opacity: .25; }
+.ac-login__surco { stroke: var(--fg-muted); stroke-width: 1; opacity: .45; }
+.ac-login__planta { stroke: var(--lime); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.ac-login__dato { position: absolute; left: var(--space-5); bottom: var(--space-5); display: grid; gap: var(--space-1); }
+.ac-login__dato .ac-eyebrow { color: var(--fg-muted); font-size: 10px; }
+.ac-login__dato-texto { color: var(--fg); font: 400 20px var(--font-display); }
+.ac-login__pie { margin: var(--space-4) 0 0; color: var(--fg-muted); font-size: 13px; }
+.ac-login__acceso { display: grid; gap: var(--space-4); }
+.ac-login__tarjeta { padding: clamp(var(--space-5), 4vw, 48px); border-radius: var(--radius-lg); }
+.ac-login__etiqueta { color: var(--ink-muted); font-size: 10px; }
+.ac-login__tarjeta h2 { margin: var(--space-3) 0 var(--space-2); font-size: 38px; letter-spacing: -0.04em; }
+.ac-login__intro { margin: 0; color: var(--ink-muted); font-size: 15px; }
+.ac-login__form { display: grid; gap: var(--space-5); margin-top: var(--space-6); }
+.ac-login__form .ac-field { gap: var(--space-2); }
+.ac-login__form .ac-input { width: 100%; min-height: 48px; border-color: var(--line-cream); border-radius: var(--radius-sm); }
+.ac-login__form .ac-input:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(4, 60, 44, .12); }
+.ac-login__contrasena { position: relative; display: flex; align-items: center; }
+.ac-login__contrasena .ac-input { padding-right: 68px; }
+.ac-login__ver { position: absolute; right: var(--space-3); padding: var(--space-2); border: 0; background: transparent; color: var(--ink-muted);
+  font: 600 13px var(--font-sans); cursor: pointer; }
+.ac-login__ver:focus-visible, .ac-login__recordar input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.ac-login__recordar { display: flex; align-items: center; gap: var(--space-2); color: var(--ink-muted); font-size: 13px; cursor: pointer; }
+.ac-login__recordar input { width: 16px; height: 16px; margin: 0; accent-color: var(--ink); }
+.ac-login__enviar { width: 100%; min-height: 50px; justify-content: space-between; padding-inline: var(--space-4); }
+.ac-login__enviar span { font-size: 20px; font-weight: 400; }
+.ac-login__error { margin: 0; color: var(--danger); font-size: 14px; }
+.ac-login__legal { margin: 0; color: var(--fg-muted); font-size: 12px; text-align: center; }
+.ac-login__legal span { padding: 0 var(--space-1); color: var(--lime); }
+
+.ac-nav__logout { border: 0; padding: var(--space-2); background: transparent; color: var(--ink-muted); font: 600 13px var(--font-sans); cursor: pointer; }
+.ac-nav__logout:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.ac-nav__logout:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: var(--radius-sm); }
+.ac-solo-lectura { margin: var(--space-4) 0 0; color: var(--fg-muted); font-size: 13px; }
+.ac-solo-lectura__contenido { min-width: 0; margin: 0; }
+.ac-app--solo-consulta main .ac-btn { display: none; }
+.ac-app--solo-consulta main .ac-boton-menu .ac-btn,
+.ac-app--solo-consulta main .ac-msg .ac-btn { display: inline-flex; }
+.ac-app--solo-consulta main .ac-actions,
+.ac-app--solo-consulta main .ac-steps-wrap,
+.ac-app--solo-consulta main .ac-catalogo-head__acciones,
+.ac-app--solo-consulta main .ac-form { display: none; }
+.ac-app--solo-consulta main .ac-table th:empty,
+.ac-app--solo-consulta main .ac-table td.acciones { display: none; }
+.ac-catalogo-head__acciones { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+.ac-usuarios-page .ac-catalogo-head { margin: var(--space-4) 0 var(--space-3); }
+.ac-usuarios { max-width: 720px; margin: 0 auto; padding: var(--space-4) var(--space-5); }
+.ac-usuarios h2 { margin: 0; }
+.ac-usuarios__intro { margin: 0; color: var(--ink-muted); }
+.ac-usuarios__form { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3) var(--space-4); margin-top: var(--space-3); }
+.ac-usuarios__acciones { display: flex; justify-content: center; grid-column: 1 / -1; }
+.ac-usuarios__tabla { margin-top: var(--space-5); }
+.ac-stock__acciones { display: flex; justify-content: flex-end; gap: var(--space-3); margin: var(--space-4) 0 var(--space-5); flex-wrap: wrap; }
+
 /* Menu (Ordenar / Filtrar) */
 .ac-menu { background: var(--surface-cream); color: var(--ink); border-radius: var(--radius-md); padding: var(--space-2); min-width: 220px; }
 .ac-menu__title { padding: var(--space-2) var(--space-3); }
