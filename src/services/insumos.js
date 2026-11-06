@@ -1,9 +1,11 @@
 import { api } from './api.js'
 
-// /api/insumos — hoy el back solo lista y edita stock y precio.
-// Alta (POST) y baja lógica (campo estado) están en una rama sin mergear: se agregan acá cuando lleguen.
-
 export const insumosService = {
-  listar: () => api.get('/insumos'),
-  actualizar: (id, { stock, precioUnitario }) => api.put(`/insumos/${id}`, { stock, precioUnitario }),
+  listarActivos: () => api.get('/insumos'),
+  listarTodas: () => api.get('/insumos?todas=true'),
+  crear: ({ nombre, stock, precioUnitario }) => api.post('/insumos', { nombre, stock, precioUnitario }),
+  actualizar: (id, { nombre, stock, precioUnitario }) =>
+    api.put(`/insumos/${id}`, { nombre, stock, precioUnitario }),
+  darDeBaja: (id) => api.delete(`/insumos/${id}`),
+  reactivar: (id) => api.put(`/insumos/${id}`, { estado: 'Activa' }),
 }
