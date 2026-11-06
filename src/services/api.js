@@ -1,5 +1,6 @@
 // Cliente HTTP común. Todos los servicios pasan por acá, así el manejo de errores es uno solo.
 // Las URLs van sin host: Vite reenvía /api al backend (ver vite.config.js).
+import { notificarSesionInvalida, obtenerToken, puedeModificar } from './auth.js'
 
 export class ApiError extends Error {
   constructor(status, message, data) {
@@ -13,16 +14,27 @@ export class ApiError extends Error {
 const SIN_CONEXION = 'No se pudo conectar con el servidor. Revisá que el backend esté corriendo en el puerto 3000.'
 
 async function request(method, url, body) {
+  if (method !== 'GET' && url !== '/usuario/login' && !puedeModificar()) {
+    throw new ApiError(403, 'Tu rol solo permite consultar información.', null)
+  }
+
   let respuesta
+  const token = obtenerToken()
+  const headers = {}
+  if (body !== undefined) headers['Content-Type'] = 'application/json'
+  if (token) headers.Authorization = `Bearer ${token}`
+
   try {
     respuesta = await fetch(`/api${url}`, {
       method,
-      headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
+      headers: Object.keys(headers).length > 0 ? headers : undefined,
       body: body !== undefined ? JSON.stringify(body) : undefined,
     })
   } catch {
     throw new ApiError(0, SIN_CONEXION, null)
   }
+
+  if (respuesta.status === 401 && token) notificarSesionInvalida()
 
   const texto = await respuesta.text()
   let data = null

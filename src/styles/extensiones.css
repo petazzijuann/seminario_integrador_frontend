@@ -12,6 +12,13 @@ body { margin: 0; background: var(--bg); }
 .ac-hero { position: relative; display: grid; grid-template-columns: repeat(12, 1fr); grid-template-rows: auto auto auto; gap: 0 var(--space-5); margin-top: var(--space-6); }
 .ac-hero__l1 { grid-column: 1 / 8; grid-row: 1; margin: 0; }
 .ac-hero__kpi { position: absolute; top: 0; right: 0; width: calc(25% - var(--space-4)); }
+.ac-hero__kpi--logo { width: calc(27% - var(--space-4)); padding: var(--space-4); background: var(--surface); border: 1.5px solid var(--line-soft); }
+.ac-hero__marca-empresa { display: grid; justify-items: center; gap: var(--space-3); text-align: center; }
+.ac-hero__logo-emblema { display: grid; place-items: center; width: 128px; height: 128px; padding: var(--space-3); border-radius: 50%; background: var(--lime); }
+.ac-hero__logo { display: block; width: 100%; height: 100%; object-fit: contain; }
+.ac-hero__logo-texto { display: grid; gap: var(--space-1); justify-items: center; }
+.ac-hero__logo-texto .ac-eyebrow { color: var(--lime); font-size: 10px; }
+.ac-hero__logo-frase { max-width: 240px; color: var(--fg); font: 400 13px/1.5 var(--font-mono); letter-spacing: .3px; }
 .ac-hero__foto { grid-column: 1 / 5; grid-row: 2 / 4; margin-top: var(--space-5); }
 .ac-hero__l2 { grid-column: 4 / 9; grid-row: 2; margin: -1px 0 0; justify-self: start; position: relative; z-index: 1; }
 .ac-hero__bajada { grid-column: 6 / 13; grid-row: 3; padding-top: var(--space-5); margin: 0; }
@@ -27,7 +34,7 @@ body { margin: 0; background: var(--bg); }
 .ac-kpi__barras .f2 { fill: var(--lime-strong); }
 .ac-kpi__barras .f4 { fill: var(--lime); }
 .ac-kpi__eje { stroke: var(--fg-muted); }
-.ac-kpi__pie { display: flex; justify-content: space-between; color: var(--fg-muted); }
+.ac-kpi__pie { display: grid; color: var(--fg-muted); text-align: center; }
 
 /* Encabezado simple de los catálogos (no llevan mosaico) */
 .ac-catalogo-head { display: flex; justify-content: space-between; align-items: end; gap: var(--space-5); margin: var(--space-7) 0 var(--space-6); flex-wrap: wrap; }

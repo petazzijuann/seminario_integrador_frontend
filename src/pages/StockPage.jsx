@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import BotonMenu from '../components/BotonMenu.jsx'
 import Button from '../components/Button.jsx'
-import CatalogoHeader from '../components/CatalogoHeader.jsx'
 import DataTable from '../components/DataTable.jsx'
 import EstadoTag from '../components/EstadoTag.jsx'
 import Indicador from '../components/Indicador.jsx'
+import PageHeader from '../components/PageHeader.jsx'
 import { useFetch } from '../hooks/useFetch.js'
 import { stockService } from '../services/stock.js'
 import { cantidad, numero, pesos, toneladas } from '../utils/format.js'
@@ -58,6 +58,7 @@ export default function StockPage() {
 
   const semillas = (stock.data?.semillas ?? []).map(conCobertura)
   const insumos = (stock.data?.insumos ?? []).map(conCobertura)
+  const productosTotales = semillas.length + insumos.length
   const semillasVisibles = verInactivas ? semillas : semillas.filter((s) => s.estado === 'Activa')
 
   const activas = semillas.filter((s) => s.estado === 'Activa')
@@ -78,10 +79,20 @@ export default function StockPage() {
 
   return (
     <>
-      <CatalogoHeader
-        eyebrow="Stock"
-        titulo="Insumos"
+      <PageHeader
+        lineas={['Stock de', 'insumos']}
         bajada={`Semillas e insumos disponibles y para cuántas siembras o labores alcanzan según lo que se usó hasta ahora. Se avisa "Stock bajo" si alcanza para menos de ${USOS_MINIMOS}.`}
+        dato={{
+          rotulo: 'Productos registrados',
+          valor: stock.loading ? '…' : stock.error ? '—' : productosTotales,
+          barras: stock.data && !stock.error
+            ? [
+                { etiqueta: 'Insumos', valor: insumos.length },
+                { etiqueta: 'Semillas', valor: semillas.length },
+              ]
+            : [],
+          pie: stock.loading ? 'Cargando catálogo…' : stock.error ? 'Datos no disponibles' : 'Insumos · semillas',
+        }}
         acciones={
           <>
             <Button variante="outline" to="/catalogos/semillas">
@@ -94,7 +105,7 @@ export default function StockPage() {
         }
       />
 
-      <section className="ac-cream ac-cream--big ac-tablero__seccion" style={{ marginTop: 0 }}>
+      <section className="ac-cream ac-cream--big ac-tablero__seccion" style={{ marginTop: 'var(--space-5)' }}>
         <div className="ac-indicadores">
           <Indicador rotulo="Valor total en stock" valor={stock.loading ? '…' : pesos(valorSemillas + valorInsumos)} nota="Stock × precio actual" />
           <Indicador
