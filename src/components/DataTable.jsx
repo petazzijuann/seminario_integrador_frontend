@@ -8,6 +8,7 @@ import Tilde from './Tilde.jsx'
 // Tarjeta crema grande con título, herramientas (Filtrar/Ordenar), tabla y acciones abajo a la derecha.
 // columnas: [{ clave, titulo, num (alinea a la derecha en mono), render(fila) }]
 // Si se pasa onSeleccionar, las filas llevan checkbox y la elegida se pinta lime.
+// Selección múltiple: pasar seleccionadosIds (array) en lugar de seleccionadaId; onSeleccionar recibe la fila tocada.
 // Maneja sola los estados: cargando, error (con Reintentar) y vacío.
 // En celular cada fila se apila como tarjeta: data-label lleva el título de la columna (ver responsive.css).
 export default function DataTable({
@@ -16,6 +17,7 @@ export default function DataTable({
   filas = [],
   getId = (fila) => fila.id,
   seleccionadaId,
+  seleccionadosIds,
   onSeleccionar,
   herramientas,
   acciones,
@@ -61,7 +63,7 @@ export default function DataTable({
         <tbody>
           {filas.map((fila) => {
             const id = getId(fila)
-            const elegida = seleccionable && id === seleccionadaId
+            const elegida = seleccionable && (seleccionadosIds ? seleccionadosIds.includes(id) : id === seleccionadaId)
             const elegir = seleccionable ? () => onSeleccionar(fila) : undefined
             return (
               <tr
