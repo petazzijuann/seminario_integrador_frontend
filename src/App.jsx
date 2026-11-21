@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import AppNav from './components/AppNav.jsx'
 import Button from './components/Button.jsx'
+import Chatbot from './components/Chatbot.jsx'
 import EstadoVacio from './components/EstadoVacio.jsx'
 import AsignarLotePage from './pages/AsignarLotePage.jsx'
 import CerrarCampaniaPage from './pages/CerrarCampaniaPage.jsx'
@@ -93,6 +94,8 @@ function AppLayout() {
           )}
         </main>
       </div>
+      {/* Fuera de <main>: así no le aplican las reglas del modo consulta y queda en todas las pantallas logueadas */}
+      <Chatbot />
     </div>
   )
 }
