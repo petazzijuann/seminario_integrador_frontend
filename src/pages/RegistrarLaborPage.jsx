@@ -26,7 +26,7 @@ const FILA_VACIA = { insumoId: '', cantidad: '' }
 export default function RegistrarLaborPage() {
   const lotes = useFetch(mantenimientosService.lotesDisponibles, [])
   const labores = useFetch(laboresService.listar, [])
-  const insumos = useFetch(insumosService.listar, [])
+  const insumos = useFetch(insumosService.listarActivos, [])
 
   const [paso, setPaso] = useState(0)
   const [asignacion, setAsignacion] = useState(null)
