@@ -55,6 +55,7 @@ export default function StockPage() {
   const [ordenSemillas, setOrdenSemillas] = useState('urgencia')
   const [ordenInsumos, setOrdenInsumos] = useState('urgencia')
   const [verInactivas, setVerInactivas] = useState(false)
+  const [verInsumosInactivos, setVerInsumosInactivos] = useState(false)
 
   const semillas = (stock.data?.semillas ?? []).map(conCobertura)
   const insumos = (stock.data?.insumos ?? []).map(conCobertura)
@@ -62,9 +63,16 @@ export default function StockPage() {
   const semillasVisibles = verInactivas ? semillas : semillas.filter((s) => s.estado === 'Activa')
 
   const activas = semillas.filter((s) => s.estado === 'Activa')
+  // Los insumos dados de baja no cuentan en los indicadores, igual que las semillas inactivas.
+  const insumosActivos = insumos.filter((i) => i.estado !== 'Inactiva')
+  const insumosVisibles = verInsumosInactivos ? insumos : insumosActivos
   const valorSemillas = activas.reduce((t, s) => t + s.valor, 0)
-  const valorInsumos = insumos.reduce((t, i) => t + i.valor, 0)
-  const alertas = [...activas, ...insumos].filter((i) => i.situacion === 'Sin stock' || i.situacion === 'Stock bajo')
+  const valorInsumos = insumosActivos.reduce((t, i) => t + i.valor, 0)
+  // Sin datos (cargando o con error) los indicadores no muestran ceros: sería un dato falso.
+  const dato = (valor) => (stock.loading ? '…' : stock.error ? '—' : valor)
+  const nota = (texto) => (stock.error ? 'Datos no disponibles' : texto)
+
+  const alertas = [...activas, ...insumosActivos].filter((i) => i.situacion === 'Sin stock' || i.situacion === 'Stock bajo')
 
   const columnasComunes = (uso, formatoStock) => [
     { clave: 'situacion', titulo: 'Situación', render: (i) => <EstadoTag estado={i.situacion} /> },
@@ -93,31 +101,30 @@ export default function StockPage() {
             : [],
           pie: stock.loading ? 'Cargando catálogo…' : stock.error ? 'Datos no disponibles' : 'Insumos · semillas',
         }}
-        acciones={
-          <>
-            <Button variante="outline" to="/catalogos/semillas">
-              Editar semillas
-            </Button>
-            <Button variante="outline" to="/catalogos/insumos">
-              Editar insumos
-            </Button>
-          </>
-        }
       />
+
+      <div className="ac-stock__acciones">
+        <Button variante="outline" to="/catalogos/semillas">
+          Editar semillas
+        </Button>
+        <Button variante="outline" to="/catalogos/insumos">
+          Editar insumos
+        </Button>
+      </div>
 
       <section className="ac-cream ac-cream--big ac-tablero__seccion" style={{ marginTop: 'var(--space-5)' }}>
         <div className="ac-indicadores">
-          <Indicador rotulo="Valor total en stock" valor={stock.loading ? '…' : pesos(valorSemillas + valorInsumos)} nota="Stock × precio actual" />
+          <Indicador rotulo="Valor total en stock" valor={dato(pesos(valorSemillas + valorInsumos))} nota={nota('Stock × precio actual')} />
           <Indicador
             rotulo="Semillas activas"
-            valor={stock.loading ? '…' : toneladas(activas.reduce((t, s) => t + s.stock, 0))}
-            nota={`${activas.length} variedades · ${pesos(valorSemillas)}`}
+            valor={dato(toneladas(activas.reduce((t, s) => t + s.stock, 0)))}
+            nota={nota(`${activas.length} variedades · ${pesos(valorSemillas)}`)}
           />
-          <Indicador rotulo="Insumos" valor={stock.loading ? '…' : pesos(valorInsumos)} nota={`${insumos.length} productos`} />
+          <Indicador rotulo="Insumos" valor={dato(pesos(valorInsumos))} nota={nota(`${insumosActivos.length} productos`)} />
           <Indicador
             rotulo="Para reponer"
-            valor={stock.loading ? '…' : cantidad(alertas.length)}
-            nota={alertas.length ? alertas.map((a) => a.nombre).join(', ') : 'Nada sin stock ni con stock bajo'}
+            valor={dato(cantidad(alertas.length))}
+            nota={nota(alertas.length ? alertas.map((a) => a.nombre).join(', ') : 'Nada sin stock ni con stock bajo')}
           />
         </div>
       </section>
@@ -156,13 +163,27 @@ export default function StockPage() {
       <div className="ac-tablero__seccion">
         <DataTable
           titulo="Insumos"
-          filas={ordenar(insumos, ordenInsumos)}
+          filas={ordenar(insumosVisibles, ordenInsumos)}
           cargando={stock.loading}
           error={stock.error}
           onReintentar={stock.recargar}
-          vacio={{ titulo: 'Todavía no hay insumos cargados' }}
-          columnas={[{ clave: 'nombre', titulo: 'Insumo', render: (i) => i.nombre }, ...columnasComunes(['labor', 'labores'], cantidad)]}
-          herramientas={<BotonMenu etiqueta="Ordenar" titulo="Ordenar por" valor={ordenInsumos} onElegir={setOrdenInsumos} opciones={OPCIONES_ORDEN} />}
+          vacio={{ titulo: verInsumosInactivos ? 'Todavía no hay insumos cargados' : 'No hay insumos activos' }}
+          columnas={[{ clave: 'nombre', titulo: 'Insumo', render: (i) => i.nombre }, { clave: 'estado', titulo: 'Estado', render: (i) => <EstadoTag estado={i.estado} /> }, ...columnasComunes(['labor', 'labores'], cantidad)]}
+          herramientas={
+            <>
+              <BotonMenu
+                etiqueta="Filtrar"
+                titulo="Mostrar"
+                valor={verInsumosInactivos ? 'todos' : 'activos'}
+                onElegir={(v) => setVerInsumosInactivos(v === 'todos')}
+                opciones={[
+                  { valor: 'activos', etiqueta: 'Solo activos' },
+                  { valor: 'todos', etiqueta: 'Todos' },
+                ]}
+              />
+              <BotonMenu etiqueta="Ordenar" titulo="Ordenar por" valor={ordenInsumos} onElegir={setOrdenInsumos} opciones={OPCIONES_ORDEN} />
+            </>
+          }
         />
       </div>
     </>
