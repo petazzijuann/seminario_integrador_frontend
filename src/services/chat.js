@@ -1,6 +1,7 @@
-// Servicio del chatbot. Por ahora es un mock: NO hace ningún request y el bot no responde.
-// El componente Chatbot solo habla con este servicio, así para conectar el backend
-// alcanza con cambiar la implementación de sendMessage (ver comentario más abajo).
+import { api } from './api.js'
+
+// Servicio del chatbot: POST /api/chat. El componente Chatbot solo habla con este servicio.
+// La conversación no se guarda en el servidor: se mandan los últimos mensajes para dar contexto.
 
 /**
  * @typedef {'user' | 'bot'} ChatRole
@@ -10,16 +11,10 @@
  * @property {ChatRole} role
  * @property {string} content
  * @property {string} createdAt  Fecha ISO 8601.
- *
- * @typedef {Object} ChatResponse
- * @property {string | null} conversationId  Id de la conversación (lo asignará el backend).
- * @property {ChatMessage | null} reply      Respuesta del bot. null mientras no haya backend.
+ * @property {boolean} [error]   true si es un aviso de error y no una respuesta.
  */
 
-// URL base del chat. Las rutas de api.js ya van relativas a /api (Vite y Vercel la reenvían al backend),
-// así que alcanza con la ruta. Se puede pisar con VITE_CHAT_API_URL en un .env.local.
-// eslint-disable-next-line no-unused-vars
-const CHAT_URL = import.meta.env.VITE_CHAT_API_URL ?? '/chat'
+const MAX_HISTORIAL = 6
 
 /** @param {ChatRole} role @param {string} content @returns {ChatMessage} */
 export function crearMensaje(role, content) {
@@ -33,24 +28,17 @@ export function crearMensaje(role, content) {
 
 export const chatService = {
   /**
-   * Envía un mensaje del usuario al bot.
+   * Envía un mensaje del usuario al asistente y devuelve su respuesta.
    * @param {string} message
-   * @param {string} [conversationId]
-   * @returns {Promise<ChatResponse>}
+   * @param {ChatMessage[]} [previos]  Conversación anterior al mensaje.
+   * @returns {Promise<ChatMessage>}
    */
-  // eslint-disable-next-line no-unused-vars
-  sendMessage: async (message, conversationId) => {
-    // Llamada real (cuando exista el endpoint en el backend):
-    //
-    //   import { api } from './api.js'
-    //   const data = await api.post(CHAT_URL, { message, conversationId })
-    //   return {
-    //     conversationId: data.conversationId,
-    //     reply: data.reply ? { ...crearMensaje('bot', data.reply), id: data.id ?? crypto.randomUUID() } : null,
-    //   }
-    //
-    // Ojo: api.js bloquea los POST para roles de solo consulta (puedeModificar()).
-    // Si el chat tiene que andar para todos los roles, agregar CHAT_URL a la excepción de request().
-    return { conversationId: conversationId ?? null, reply: null }
+  sendMessage: async (message, previos = []) => {
+    const history = previos
+      .filter((m) => !m.error)
+      .slice(-MAX_HISTORIAL)
+      .map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content }))
+    const { reply } = await api.post('/chat', { message, history })
+    return crearMensaje('bot', reply)
   },
 }

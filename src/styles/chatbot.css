@@ -67,6 +67,15 @@
 .ac-chat__burbuja--bot { align-self: flex-start; background: var(--line-cream); color: var(--ink); border-bottom-left-radius: var(--radius-sm); transform-origin: bottom left; }
 @keyframes ac-chat-burbuja { from { opacity: 0; transform: translateY(8px) scale(.94); } }
 
+.ac-chat__burbuja--error { background: transparent; border: 1.5px solid var(--line-cream); color: var(--ink-muted); }
+
+/* El asistente está escribiendo */
+.ac-chat__espera { display: flex; gap: var(--space-1); padding: var(--space-3); }
+.ac-chat__espera i { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-muted); animation: ac-chat-punto 1.2s ease-in-out infinite; }
+.ac-chat__espera i:nth-of-type(2) { animation-delay: .15s; }
+.ac-chat__espera i:nth-of-type(3) { animation-delay: .3s; }
+@keyframes ac-chat-punto { 0%, 60%, 100% { opacity: .3; } 30% { opacity: 1; } }
+
 /* Input */
 .ac-chat__form { flex: 0 0 auto; display: flex; align-items: flex-end; gap: var(--space-2); padding: var(--space-3); border-top: 1.5px solid var(--line-cream); }
 .ac-chat__input { resize: none; overflow-y: auto; line-height: 1.4; padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); max-height: 120px; }
@@ -95,5 +104,6 @@
   .ac-chat__panel, .ac-chat__panel--abierto { transform: none; transition: opacity .15s ease, visibility 0s linear .15s; }
   .ac-chat__panel--abierto { transition: opacity .15s ease, visibility 0s; }
   .ac-chat__burbuja { animation: ac-chat-fundido .15s ease both; }
+  .ac-chat__espera i { animation: none; }
 }
 @keyframes ac-chat-fundido { from { opacity: 0; } }

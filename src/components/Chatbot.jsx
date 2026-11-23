@@ -9,6 +9,8 @@ import { chatService, crearMensaje } from '../services/chat.js'
 const RobotAgro = lazy(() => import('./RobotAgro.jsx'))
 
 const MAX_ALTO_INPUT = 120
+const MARGEN_SCROLL = 16
+const MAX_MENSAJE = 500 // mismo límite que el back (chat.controller.ts)
 
 export default function Chatbot() {
   const [abierto, setAbierto] = useState(false)
@@ -16,10 +18,10 @@ export default function Chatbot() {
   const [mensajes, setMensajes] = useState(/** @type {import('../services/chat.js').ChatMessage[]} */ ([]))
   const [texto, setTexto] = useState('')
   const [reaccion, setReaccion] = useState(0)
+  const [esperando, setEsperando] = useState(false)
   const reducido = usePrefiereMenosMovimiento()
   const altoTeclado = useAltoTeclado(abierto)
 
-  const conversacion = useRef(null)
   const boton = useRef(null)
   const input = useRef(null)
   const lista = useRef(null)
@@ -55,11 +57,16 @@ export default function Chatbot() {
     return () => document.removeEventListener('keydown', alTeclear)
   }, [abierto])
 
-  // Autoscroll al último mensaje
+  // Autoscroll
   useEffect(() => {
     const el = lista.current
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: reducido ? 'auto' : 'smooth' })
-  }, [mensajes, reducido])
+    if (!el) return
+    // Una respuesta larga se muestra desde su comienzo; lo demás baja hasta el final.
+    const ultima = el.lastElementChild
+    const desdeElComienzo = !esperando && mensajes.at(-1)?.role === 'bot' && ultima
+    const top = desdeElComienzo ? ultima.offsetTop - el.offsetTop - MARGEN_SCROLL : el.scrollHeight
+    el.scrollTo({ top, behavior: reducido ? 'auto' : 'smooth' })
+  }, [mensajes, esperando, reducido])
 
   // El textarea crece con el texto hasta MAX_ALTO_INPUT
   useEffect(() => {
@@ -72,19 +79,23 @@ export default function Chatbot() {
   async function enviar(e) {
     e?.preventDefault()
     const contenido = texto.trim()
-    if (!contenido) return
+    if (!contenido || esperando) return
 
-    setMensajes((previos) => [...previos, crearMensaje('user', contenido)])
+    const previos = mensajes
+    setMensajes((actuales) => [...actuales, crearMensaje('user', contenido)])
     setTexto('')
     setReaccion((n) => n + 1)
+    setEsperando(true)
     input.current?.focus()
 
     try {
-      const respuesta = await chatService.sendMessage(contenido, conversacion.current ?? undefined)
-      if (respuesta.conversationId) conversacion.current = respuesta.conversationId
-      if (respuesta.reply) setMensajes((previos) => [...previos, respuesta.reply])
-    } catch {
-      // Sin backend no hay errores posibles. Cuando se conecte, mostrar acá un mensaje con ApiError.message.
+      const respuesta = await chatService.sendMessage(contenido, previos)
+      setMensajes((actuales) => [...actuales, respuesta])
+    } catch (err) {
+      const aviso = err instanceof Error && err.message ? err.message : 'El asistente no pudo responder. Probá de nuevo.'
+      setMensajes((actuales) => [...actuales, { ...crearMensaje('bot', aviso), error: true }])
+    } finally {
+      setEsperando(false)
     }
   }
 
@@ -93,7 +104,7 @@ export default function Chatbot() {
     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) enviar(e)
   }
 
-  const vacio = texto.trim() === ''
+  const bloqueado = texto.trim() === '' || esperando
 
   return (
     <div className="ac-chat" style={{ '--ac-chat-teclado': `${altoTeclado}px` }}>
@@ -123,14 +134,25 @@ export default function Chatbot() {
         <ol ref={lista} className="ac-chat__mensajes" aria-live="polite" aria-label="Mensajes">
           {mensajes.length === 0 && (
             <li className="ac-chat__vacio">
-              Escribí tu consulta. Por ahora el asistente todavía no responde: estamos preparando la conexión.
+              Preguntame cómo usar AgroControl o consultame tus datos: lotes, campañas, stock, labores o rinde.
             </li>
           )}
           {mensajes.map((mensaje) => (
-            <li key={mensaje.id} className={`ac-chat__burbuja ac-chat__burbuja--${mensaje.role}`}>
+            <li
+              key={mensaje.id}
+              className={`ac-chat__burbuja ac-chat__burbuja--${mensaje.role}${mensaje.error ? ' ac-chat__burbuja--error' : ''}`}
+            >
               {mensaje.content}
             </li>
           ))}
+          {esperando && (
+            <li className="ac-chat__burbuja ac-chat__burbuja--bot ac-chat__espera">
+              <span className="ac-oculto">El asistente está escribiendo</span>
+              <i aria-hidden="true" />
+              <i aria-hidden="true" />
+              <i aria-hidden="true" />
+            </li>
+          )}
         </ol>
 
         <form className="ac-chat__form" onSubmit={enviar}>
@@ -142,12 +164,13 @@ export default function Chatbot() {
             id={`${idPanel}-input`}
             className="ac-input ac-chat__input"
             rows={1}
+            maxLength={MAX_MENSAJE}
             placeholder="Escribí un mensaje…"
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
             onKeyDown={alTeclearInput}
           />
-          <button type="submit" className="ac-chat__enviar" aria-label="Enviar mensaje" disabled={vacio}>
+          <button type="submit" className="ac-chat__enviar" aria-label="Enviar mensaje" disabled={bloqueado}>
             <IconoEnviar />
           </button>
         </form>

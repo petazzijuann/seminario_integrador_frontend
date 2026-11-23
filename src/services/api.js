@@ -11,10 +11,13 @@ export class ApiError extends Error {
   }
 }
 
+const SIN_RESTRICCION_DE_ROL = ['/usuario/login', '/chat']
+
 const SIN_CONEXION = 'No se pudo conectar con el servidor. Revisá que el backend esté corriendo en el puerto 3000.'
 
 async function request(method, url, body) {
-  if (method !== 'GET' && url !== '/usuario/login' && !puedeModificar()) {
+  // El login y el asistente son POST pero no modifican datos: los puede usar cualquier rol.
+  if (method !== 'GET' && !SIN_RESTRICCION_DE_ROL.includes(url) && !puedeModificar()) {
     throw new ApiError(403, 'Tu rol solo permite consultar información.', null)
   }
 
