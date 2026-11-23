@@ -31,14 +31,15 @@ export const chatService = {
    * Envía un mensaje del usuario al asistente y devuelve su respuesta.
    * @param {string} message
    * @param {ChatMessage[]} [previos]  Conversación anterior al mensaje.
+   * @param {string} [route]  Ruta de la pantalla actual, para que entienda "acá".
    * @returns {Promise<ChatMessage>}
    */
-  sendMessage: async (message, previos = []) => {
+  sendMessage: async (message, previos = [], route) => {
     const history = previos
       .filter((m) => !m.error)
       .slice(-MAX_HISTORIAL)
       .map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content }))
-    const { reply } = await api.post('/chat', { message, history })
+    const { reply } = await api.post('/chat', { message, history, route })
     return crearMensaje('bot', reply)
   },
 }

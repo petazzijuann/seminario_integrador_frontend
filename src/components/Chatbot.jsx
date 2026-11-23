@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { chatService, crearMensaje } from '../services/chat.js'
 
 // Ficha: components/Chatbot.md
@@ -13,6 +14,7 @@ const MARGEN_SCROLL = 16
 const MAX_MENSAJE = 500 // mismo límite que el back (chat.controller.ts)
 
 export default function Chatbot() {
+  const { pathname } = useLocation()
   const [abierto, setAbierto] = useState(false)
   const [yaAbierto, setYaAbierto] = useState(false) // el robot se monta al primer open y queda montado (pausado)
   const [mensajes, setMensajes] = useState(/** @type {import('../services/chat.js').ChatMessage[]} */ ([]))
@@ -89,7 +91,7 @@ export default function Chatbot() {
     input.current?.focus()
 
     try {
-      const respuesta = await chatService.sendMessage(contenido, previos)
+      const respuesta = await chatService.sendMessage(contenido, previos, pathname)
       setMensajes((actuales) => [...actuales, respuesta])
     } catch (err) {
       const aviso = err instanceof Error && err.message ? err.message : 'El asistente no pudo responder. Probá de nuevo.'
