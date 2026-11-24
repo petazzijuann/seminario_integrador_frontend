@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react'
+import { usePrefiereMenosMovimiento } from '../hooks/useMovimiento.js'
 import { useLocation } from 'react-router-dom'
 import { chatService, crearMensaje } from '../services/chat.js'
+import AgrobotFab from './AgrobotFab.jsx'
 
 // Ficha: components/Chatbot.md
 // Botón flotante + panel de chat. Se monta una vez en AppLayout (App.jsx).
@@ -178,36 +180,9 @@ export default function Chatbot() {
         </form>
       </section>
 
-      <button
-        ref={boton}
-        type="button"
-        className={`ac-chat__fab${abierto ? ' ac-chat__fab--abierto' : ''}${yaAbierto ? '' : ' ac-chat__fab--invita'}`}
-        aria-label={abierto ? 'Cerrar chat' : 'Abrir chat con el asistente'}
-        aria-expanded={abierto}
-        aria-controls={idPanel}
-        onClick={alternar}
-      >
-        <span className="ac-chat__icono ac-chat__icono--chat">
-          <IconoChat />
-        </span>
-        <span className="ac-chat__icono ac-chat__icono--cerrar">
-          <IconoCerrar />
-        </span>
-      </button>
+      <AgrobotFab abierto={abierto} yaAbierto={yaAbierto} idPanel={idPanel} onAlternar={alternar} refBoton={boton} />
     </div>
   )
-}
-
-function usePrefiereMenosMovimiento() {
-  const [reducido, setReducido] = useState(() => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false)
-  useEffect(() => {
-    const consulta = window.matchMedia?.('(prefers-reduced-motion: reduce)')
-    if (!consulta) return
-    const alCambiar = () => setReducido(consulta.matches)
-    consulta.addEventListener('change', alCambiar)
-    return () => consulta.removeEventListener('change', alCambiar)
-  }, [])
-  return reducido
 }
 
 // En mobile el teclado achica el visual viewport pero no el layout (sobre todo en iOS),
@@ -228,15 +203,6 @@ function useAltoTeclado(activo) {
     }
   }, [activo])
   return alto
-}
-
-function IconoChat() {
-  return (
-    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12Z" />
-      <path d="M8.5 12h.01M12 12h.01M15.5 12h.01" strokeWidth="2.6" />
-    </svg>
-  )
 }
 
 function IconoCerrar() {

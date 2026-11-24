@@ -1,44 +1,152 @@
 /* AgroControl — Chatbot (components/Chatbot.jsx). Todo valor viene de tokens.css.
    Capas: queda arriba de menús y tooltips (20-40) pero abajo del overlay de diálogos (50). */
 
-.ac-chat { --ac-chat-fab: 60px; --ac-chat-margen: var(--space-5); --ac-chat-teclado: 0px; }
+.ac-chat { --ac-chat-fab: 60px; --ac-chat-margen: var(--space-5); --ac-chat-teclado: 0px;
+  /* Separado del margen para respetar el safe-area de los dispositivos con notch/barra gestual. */
+  --ac-chat-abajo: calc(var(--ac-chat-margen) + env(safe-area-inset-bottom, 0px));
+  --ac-chat-derecha: calc(var(--ac-chat-margen) + env(safe-area-inset-right, 0px)); }
 
-/* Botón flotante */
-.ac-chat__fab { position: fixed; right: var(--ac-chat-margen); bottom: var(--ac-chat-margen); z-index: 45;
-  width: var(--ac-chat-fab); height: var(--ac-chat-fab); border-radius: 50%; border: 0; padding: 0; cursor: pointer;
-  display: grid; place-items: center; background: var(--lime-strong); color: var(--ink); box-shadow: var(--shadow-float);
-  transition: transform .2s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease; }
-.ac-chat__fab:hover { transform: scale(1.08); background: var(--lime); }
+/* Botón flotante. Fondo oscuro (forest → ink, igual en los dos temas) para que la cabeza
+   crema y los ojos lima tengan el mismo contraste que en el escenario del panel. */
+.ac-chat__fab { position: fixed; right: var(--ac-chat-derecha); bottom: var(--ac-chat-abajo); z-index: 45;
+  box-sizing: border-box; width: var(--ac-chat-fab); height: var(--ac-chat-fab); border-radius: 50%; padding: 0; cursor: pointer;
+  display: grid; place-items: center; border: 2px solid var(--lime-strong); color: var(--lime); box-shadow: var(--shadow-float);
+  background: radial-gradient(120% 110% at 50% 115%, var(--forest) 0%, var(--ink) 72%);
+  transition: transform .2s cubic-bezier(.34, 1.56, .64, 1), border-color .2s ease, background-color .2s ease; }
+.ac-chat__fab:hover { transform: scale(1.08); border-color: var(--lime); }
 .ac-chat__fab:active { transform: scale(.92); }
 .ac-chat__fab:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
-.ac-chat__fab--abierto { background: var(--ink); color: var(--lime); }
-.ac-chat__fab--abierto:hover { background: var(--ink); }
+.ac-chat__fab--abierto { background: var(--ink); border-color: var(--ink); color: var(--lime); }
+.ac-chat__fab--abierto:hover { transform: none; border-color: var(--ink); }
 
-/* Pulso que invita a abrir (hasta la primera vez que se abre) */
-.ac-chat__fab--invita::after { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
-  box-shadow: 0 0 0 0 color-mix(in srgb, var(--lime) 70%, transparent); animation: ac-chat-pulso 2.4s ease-out infinite; }
-@keyframes ac-chat-pulso {
-  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--lime) 70%, transparent); }
-  70%, 100% { box-shadow: 0 0 0 18px color-mix(in srgb, var(--lime) 0%, transparent); }
-}
-
-/* Ícono chat ↔ X */
+/* Cabeza ↔ X */
 .ac-chat__icono { grid-area: 1 / 1; display: grid; place-items: center; transition: transform .3s cubic-bezier(.22, 1, .36, 1), opacity .2s ease; }
+.ac-chat__icono--cabeza { width: 100%; height: 100%; }
 .ac-chat__icono--cerrar { opacity: 0; transform: rotate(-90deg) scale(.5); }
-.ac-chat__fab--abierto .ac-chat__icono--chat { opacity: 0; transform: rotate(90deg) scale(.5); }
+.ac-chat__fab--abierto .ac-chat__icono--cabeza { opacity: 0; transform: rotate(90deg) scale(.5); }
 .ac-chat__fab--abierto .ac-chat__icono--cerrar { opacity: 1; transform: none; }
 
-/* Panel */
-.ac-chat__panel { position: fixed; z-index: 45; right: var(--ac-chat-margen);
-  bottom: calc(var(--ac-chat-margen) + var(--ac-chat-fab) + var(--space-3) + var(--ac-chat-teclado));
+/* Capas de animación de la cabeza: flotación → gesto puntual → seguimiento del mouse.
+   Van separadas porque cada una escribe transform y si no se pisarían entre sí. */
+.ac-chat__flota, .ac-chat__gesto, .ac-chat__mira { display: block; width: 100%; height: 100%; }
+.ac-bot { display: block; width: 100%; height: 100%; overflow: visible; }
+
+.ac-chat__flota { animation: ac-bot-flota 4.2s ease-in-out infinite; }
+.ac-chat__mira { transform: translate(calc(var(--ac-bot-x, 0) * 2.2px), calc(var(--ac-bot-y, 0) * 1.8px)) rotate(calc(var(--ac-bot-x, 0) * 4deg));
+  transition: transform .25s ease-out; }
+.ac-bot__ojos { transform-box: fill-box; transform-origin: center; animation: ac-bot-parpadeo 5.4s ease-in-out infinite; }
+.ac-bot__brote { transform-box: fill-box; transform-origin: 50% 100%; animation: ac-bot-brote 3.1s ease-in-out infinite; }
+
+@keyframes ac-bot-flota { 0%, 100% { transform: translateY(-1.5px); } 50% { transform: translateY(1.5px); } }
+@keyframes ac-bot-parpadeo { 0%, 90%, 100% { transform: scaleY(1); } 93% { transform: scaleY(.1); } 96% { transform: scaleY(1); } }
+@keyframes ac-bot-brote { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(6deg); } }
+
+/* Gestos cada 20-30 s: se asoma o ladea la cabeza. Los dispara el componente por clase. */
+.ac-chat__fab--asomar .ac-chat__gesto { animation: ac-bot-asomar 1s cubic-bezier(.34, 1.3, .64, 1); }
+.ac-chat__fab--ladear .ac-chat__gesto { animation: ac-bot-ladear 1s ease-in-out; }
+@keyframes ac-bot-asomar {
+  0%, 100% { transform: translateY(0) scale(1); }
+  35% { transform: translateY(-4px) scale(1.06); }
+  70% { transform: translateY(1px) scale(.99); }
+}
+@keyframes ac-bot-ladear {
+  0%, 100% { transform: rotate(0); }
+  30% { transform: rotate(-9deg); }
+  65% { transform: rotate(6deg); }
+}
+
+/* ── Reposo: a los 20 s sin actividad del usuario el bot se duerme o se pone a plantar.
+   Alterna entre las dos escenas en cada ronda; el componente pone la clase. ─────────── */
+
+/* Vuelta suave a la pose normal cuando el usuario reaparece: al quitarse la animación,
+   el transform transiciona en lugar de saltar. */
+.ac-chat__gesto { transition: transform .45s cubic-bezier(.22, 1, .36, 1); }
+
+.ac-bot__ojos-abiertos, .ac-bot__ojos-cerrados { transition: opacity .3s ease; }
+.ac-bot__ojos-cerrados { opacity: 0; }
+.ac-bot__zzz, .ac-bot__plantita { opacity: 0; pointer-events: none; }
+.ac-bot__z { fill: var(--lime); font: 700 12px var(--font-sans); }
+.ac-bot__plantita { transform-box: fill-box; transform-origin: 50% 100%; }
+
+/* Dormido: cabeza ladeada, respiración lenta, ojos cerrados y zzz. */
+.ac-chat__fab--dormido .ac-chat__gesto { animation: ac-bot-dormir 4.4s ease-in-out infinite; }
+.ac-chat__fab--dormido .ac-chat__flota { animation-duration: 6.5s; }
+.ac-chat__fab--dormido .ac-chat__mira { transform: none; }
+.ac-chat__fab--dormido .ac-bot__ojos { animation: none; } /* no parpadea si duerme */
+.ac-chat__fab--dormido .ac-bot__ojos-abiertos { opacity: 0; }
+.ac-chat__fab--dormido .ac-bot__ojos-cerrados { opacity: 1; }
+.ac-chat__fab--dormido .ac-bot__zzz { opacity: 1; }
+.ac-chat__fab--dormido .ac-bot__z { animation: ac-bot-zzz 3s ease-out infinite; }
+.ac-chat__fab--dormido .ac-bot__z:nth-child(2) { animation-delay: .6s; }
+.ac-chat__fab--dormido .ac-bot__z:nth-child(3) { animation-delay: 1.2s; }
+
+@keyframes ac-bot-dormir {
+  0%, 100% { transform: rotate(-7deg) translateY(1px); }
+  50% { transform: rotate(-9deg) translateY(2.5px); }
+}
+@keyframes ac-bot-zzz {
+  0% { opacity: 0; transform: translate(0, 2px) scale(.7); }
+  35% { opacity: 1; transform: translate(1px, -1px) scale(1); }
+  100% { opacity: 0; transform: translate(3px, -5px) scale(1.1); }
+}
+
+/* Plantando: se agacha a dejar el brote y se endereza; la plantita crece y se queda. */
+.ac-chat__fab--plantando .ac-chat__gesto { animation: ac-bot-plantar 4.6s ease-in-out infinite; }
+.ac-chat__fab--plantando .ac-bot__plantita { opacity: 1; animation: ac-bot-crecer 4.6s ease-in-out infinite; }
+
+@keyframes ac-bot-plantar {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  20% { transform: translateY(3px) rotate(-5deg); }
+  45% { transform: translateY(4.5px) rotate(-7deg); }
+  70% { transform: translateY(0) rotate(2deg); }
+}
+@keyframes ac-bot-crecer {
+  0%, 15% { opacity: 0; transform: scaleY(0); }
+  50% { opacity: 1; transform: scaleY(1); }
+  90% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+
+/* Panel abierto o pestaña oculta: nada se mueve (document.hidden lo decide el componente). */
+.ac-chat__fab--quieto .ac-chat__flota,
+.ac-chat__fab--quieto .ac-chat__gesto,
+.ac-chat__fab--quieto .ac-bot__ojos,
+.ac-chat__fab--quieto .ac-bot__brote,
+.ac-chat__fab--quieto .ac-bot__z,
+.ac-chat__fab--quieto .ac-bot__plantita { animation-play-state: paused; }
+.ac-chat__fab--quieto .ac-chat__mira { transform: none; }
+
+/* Burbuja de saludo (primera visita, se guarda en localStorage) */
+.ac-chat__saludo { position: fixed; z-index: 45; right: var(--ac-chat-derecha);
+  bottom: calc(var(--ac-chat-abajo) + var(--ac-chat-fab) + var(--space-2));
+  max-width: min(240px, calc(100vw - 2 * var(--ac-chat-margen)));
+  display: flex; align-items: flex-start; gap: var(--space-2); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+  border-radius: var(--radius-md); border: 1.5px solid var(--line-cream); background: var(--surface-cream); color: var(--ink);
+  box-shadow: var(--shadow-float); animation: ac-chat-saludo .32s cubic-bezier(.22, 1, .36, 1) both; }
+.ac-chat__saludo::after { content: ""; position: absolute; right: calc(var(--ac-chat-fab) / 2 - 7px); bottom: -7px;
+  width: 12px; height: 12px; background: var(--surface-cream); border-right: 1.5px solid var(--line-cream);
+  border-bottom: 1.5px solid var(--line-cream); transform: rotate(45deg); }
+.ac-chat__saludo-texto { margin: 0; font: 600 14px/1.35 var(--font-sans); }
+.ac-chat__saludo-cerrar { flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%; border: 0; padding: 0; cursor: pointer;
+  display: grid; place-items: center; background: transparent; color: var(--ink-muted);
+  transition: background-color .15s ease, color .15s ease; }
+.ac-chat__saludo-cerrar:hover { background: var(--line-cream); color: var(--ink); }
+.ac-chat__saludo-cerrar:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@keyframes ac-chat-saludo { from { opacity: 0; transform: translateY(6px) scale(.94); } }
+
+/* Panel. Crece desde el centro del botón: el transform-origin se corre media altura del fab
+   por debajo del borde inferior del panel, que es justo donde está el círculo. */
+.ac-chat__panel { position: fixed; z-index: 45; right: var(--ac-chat-derecha);
+  bottom: calc(var(--ac-chat-abajo) + var(--ac-chat-fab) + var(--space-3) + var(--ac-chat-teclado));
   width: min(380px, calc(100vw - 2 * var(--ac-chat-margen)));
-  height: min(600px, calc(100dvh - var(--ac-chat-fab) - 2 * var(--ac-chat-margen) - var(--space-3) - var(--space-4) - var(--ac-chat-teclado)));
-  display: flex; flex-direction: column; overflow: hidden; border-radius: var(--radius-lg);
+  height: min(600px, calc(100dvh - var(--ac-chat-fab) - var(--ac-chat-abajo) - var(--ac-chat-margen) - var(--space-3) - var(--space-4) - var(--ac-chat-teclado)));
+  display: flex; flex-direction: column; overflow: hidden;
   background: var(--surface-cream); color: var(--ink); box-shadow: var(--shadow-float); border: 1.5px solid var(--line-cream);
-  transform-origin: bottom right; opacity: 0; visibility: hidden; transform: translate(12px, 16px) scale(.85);
-  transition: opacity .22s ease, transform .3s cubic-bezier(.22, 1, .36, 1), visibility 0s linear .3s; }
-.ac-chat__panel--abierto { opacity: 1; visibility: visible; transform: none;
-  transition: opacity .22s ease, transform .35s cubic-bezier(.34, 1.3, .64, 1), visibility 0s; }
+  transform-origin: calc(100% - var(--ac-chat-fab) / 2) calc(100% + var(--ac-chat-fab) / 2 + var(--space-3));
+  opacity: 0; visibility: hidden; transform: scale(.16); border-radius: 50%;
+  transition: opacity .16s ease .1s, transform .34s cubic-bezier(.22, 1, .36, 1), border-radius .34s ease, visibility 0s linear .34s; }
+.ac-chat__panel--abierto { opacity: 1; visibility: visible; transform: scale(1); border-radius: var(--radius-lg);
+  transition: opacity .18s ease, transform .42s cubic-bezier(.34, 1.26, .64, 1), border-radius .3s ease, visibility 0s; }
 
 /* Escenario del robot */
 .ac-chat__escenario { position: relative; flex: 0 0 auto; height: clamp(110px, 32%, 190px);
@@ -88,20 +196,42 @@
 
 /* Mobile: el panel ocupa casi todo el ancho y sube con el teclado; el botón flotante se esconde (cierra la X) */
 @media (max-width: 640px) {
-  .ac-chat { --ac-chat-fab: 54px; --ac-chat-margen: var(--space-4); }
-  .ac-chat__panel { left: var(--space-3); right: var(--space-3); width: auto; bottom: calc(var(--space-3) + var(--ac-chat-teclado));
-    height: min(640px, calc(100dvh - var(--space-5) - var(--ac-chat-teclado))); }
+  .ac-chat { --ac-chat-fab: 54px; --ac-chat-margen: var(--space-4); } /* 54px de área táctil */
+  .ac-chat__panel { left: var(--space-3); right: var(--space-3); width: auto;
+    bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px) + var(--ac-chat-teclado));
+    height: min(640px, calc(100dvh - var(--space-5) - env(safe-area-inset-bottom, 0px) - var(--ac-chat-teclado)));
+    /* El panel se pega a los bordes, así que el origen se recalcula contra la nueva esquina. */
+    transform-origin: calc(100% - var(--ac-chat-fab) / 2 - var(--space-4) + var(--space-3))
+      calc(100% + var(--ac-chat-fab) / 2 + var(--space-4) - var(--space-3)); }
   .ac-chat__fab--abierto { opacity: 0; transform: scale(.6); pointer-events: none; }
   .ac-chat__input { font-size: 16px; } /* 16px evita el zoom automático de iOS */
+
+  /* Pista de scroll para que el fab no tape la última fila de acciones de los formularios
+     (.ac-actions va alineada a la derecha, justo debajo del botón). */
+  .ac-app main { padding-bottom: calc(54px + var(--space-5) + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* Menos movimiento: sin pulso, sin escalas; solo fundidos */
 @media (prefers-reduced-motion: reduce) {
   .ac-chat__fab, .ac-chat__icono, .ac-chat__cerrar, .ac-chat__enviar { transition: opacity .15s ease, background-color .15s ease; }
   .ac-chat__fab:hover, .ac-chat__fab:active, .ac-chat__cerrar:hover, .ac-chat__enviar:hover:not([disabled]) { transform: none; }
-  .ac-chat__fab--invita::after, .ac-chat__canvas--cargando { animation: none; }
-  .ac-chat__icono--cerrar, .ac-chat__fab--abierto .ac-chat__icono--chat { transform: none; }
-  .ac-chat__panel, .ac-chat__panel--abierto { transform: none; transition: opacity .15s ease, visibility 0s linear .15s; }
+  .ac-chat__canvas--cargando { animation: none; }
+  .ac-chat__icono--cerrar, .ac-chat__fab--abierto .ac-chat__icono--cabeza { transform: none; }
+
+  /* El bot queda quieto: sin flotación, sin parpadeo, sin gestos, sin reposo y sin seguir el mouse. */
+  .ac-chat__flota, .ac-chat__gesto, .ac-bot__ojos, .ac-bot__brote, .ac-bot__z, .ac-bot__plantita,
+  .ac-chat__fab--asomar .ac-chat__gesto, .ac-chat__fab--ladear .ac-chat__gesto,
+  .ac-chat__fab--dormido .ac-chat__gesto, .ac-chat__fab--dormido .ac-chat__flota,
+  .ac-chat__fab--dormido .ac-bot__z,
+  .ac-chat__fab--plantando .ac-chat__gesto, .ac-chat__fab--plantando .ac-bot__plantita { animation: none; transform: none; }
+  .ac-chat__gesto { transition: none; }
+  .ac-chat__mira { transform: none; transition: none; }
+  .ac-bot__zzz, .ac-chat__fab--dormido .ac-bot__zzz { opacity: 0; }
+  .ac-bot__plantita, .ac-chat__fab--plantando .ac-bot__plantita { opacity: 0; }
+  .ac-chat__saludo { animation: ac-chat-fundido .15s ease both; }
+
+  .ac-chat__panel, .ac-chat__panel--abierto { transform: none; border-radius: var(--radius-lg);
+    transition: opacity .15s ease, visibility 0s linear .15s; }
   .ac-chat__panel--abierto { transition: opacity .15s ease, visibility 0s; }
   .ac-chat__burbuja { animation: ac-chat-fundido .15s ease both; }
   .ac-chat__espera i { animation: none; }
