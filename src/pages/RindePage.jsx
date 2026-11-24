@@ -126,46 +126,63 @@ export default function RindePage() {
     )
   }
 
+  const selector = (
+    <section className="ac-cream ac-selector" aria-label="Elegir campaña">
+      <div className="ac-selector__campos">
+        <BotonMenu
+          etiqueta={`Lote: ${loteId === 'todos' ? 'Todos' : `Lote ${lotes.find((l) => l.id === loteId)?.nroLote}`}`}
+          titulo="Lote"
+          valor={loteId}
+          onElegir={setLoteId}
+          opciones={[{ valor: 'todos', etiqueta: 'Todos los lotes' }, ...lotes.map((l) => ({ valor: l.id, etiqueta: `Lote ${l.nroLote} · ${l.zona}` }))]}
+        />
+        <BotonMenu
+          etiqueta={`Campaña: ${elegida ? `${elegida.corta} · ${elegida.periodo}` : '—'}`}
+          titulo="Campaña"
+          valor={elegida?.id}
+          onElegir={setElegidaId}
+          opciones={[...campanias].reverse().map((c) => ({ valor: c.id, etiqueta: c.nombre }))}
+        />
+        <BotonMenu
+          etiqueta={`Cultivo: ${cultivo === 'todos' ? 'Todos' : cultivo}`}
+          titulo="Cultivo"
+          valor={cultivo}
+          onElegir={setCultivo}
+          opciones={[{ valor: 'todos', etiqueta: 'Todos' }, ...cultivos.map((c) => ({ valor: c, etiqueta: c }))]}
+        />
+        <BotonMenu
+          etiqueta={`Comparar con: ${comparar === 'promedio' ? 'promedio del lote' : 'campaña anterior del lote'}`}
+          titulo="Comparar con"
+          valor={comparar}
+          onElegir={setComparar}
+          opciones={[
+            { valor: 'anterior', etiqueta: 'Campaña anterior del mismo lote' },
+            { valor: 'promedio', etiqueta: 'Promedio del mismo lote' },
+          ]}
+        />
+      </div>
+      {elegida && <p className="small ac-selector__texto">{textoComparacion}</p>}
+    </section>
+  )
+
+  // Hay campañas cerradas, pero ninguna coincide con los filtros elegidos.
+  if (!elegida) {
+    return (
+      <>
+        {selector}
+        {header}
+        <section className="ac-cream ac-cream--big ac-tablero__seccion">
+          <EstadoVacio titulo="No hay campañas para ese filtro" texto="Cambiá el lote o el cultivo para ver otras campañas." />
+        </section>
+      </>
+    )
+  }
+
   const r = elegida.resumen
 
   return (
     <>
-      <section className="ac-cream ac-selector" aria-label="Elegir campaña">
-        <div className="ac-selector__campos">
-          <BotonMenu
-            etiqueta={`Lote: ${loteId === 'todos' ? 'Todos' : `Lote ${lotes.find((l) => l.id === loteId)?.nroLote}`}`}
-            titulo="Lote"
-            valor={loteId}
-            onElegir={setLoteId}
-            opciones={[{ valor: 'todos', etiqueta: 'Todos los lotes' }, ...lotes.map((l) => ({ valor: l.id, etiqueta: `Lote ${l.nroLote} · ${l.zona}` }))]}
-          />
-          <BotonMenu
-            etiqueta={`Campaña: ${elegida.corta} · ${elegida.periodo}`}
-            titulo="Campaña"
-            valor={elegida.id}
-            onElegir={setElegidaId}
-            opciones={[...campanias].reverse().map((c) => ({ valor: c.id, etiqueta: c.nombre }))}
-          />
-          <BotonMenu
-            etiqueta={`Cultivo: ${cultivo === 'todos' ? 'Todos' : cultivo}`}
-            titulo="Cultivo"
-            valor={cultivo}
-            onElegir={setCultivo}
-            opciones={[{ valor: 'todos', etiqueta: 'Todos' }, ...cultivos.map((c) => ({ valor: c, etiqueta: c }))]}
-          />
-          <BotonMenu
-            etiqueta={`Comparar con: ${comparar === 'promedio' ? 'promedio del lote' : 'campaña anterior del lote'}`}
-            titulo="Comparar con"
-            valor={comparar}
-            onElegir={setComparar}
-            opciones={[
-              { valor: 'anterior', etiqueta: 'Campaña anterior del mismo lote' },
-              { valor: 'promedio', etiqueta: 'Promedio del mismo lote' },
-            ]}
-          />
-        </div>
-        <p className="small ac-selector__texto">{textoComparacion}</p>
-      </section>
+      {selector}
 
       {header}
 

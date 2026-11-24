@@ -15,7 +15,8 @@ import { useFetch } from '../hooks/useFetch.js'
 import { percancesService } from '../services/percances.js'
 import { fecha, hectareas, hoyISO, nombreCampania, numero, parsearNumero, pesos } from '../utils/format.js'
 
-
+// Percance general: un mismo percance (granizo, inundación…) imputado a varias siembras en curso.
+// Se crea UN percance y un CostoPercance por siembra elegida. El costo total se reparte por superficie.
 const PASOS = ['Seleccionar lotes', 'Cargar percance', 'Confirmar percance']
 
 // Número → texto para un input: coma decimal, sin separador de miles (lo que entiende parsearNumero).

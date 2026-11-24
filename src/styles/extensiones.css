@@ -22,6 +22,8 @@ body { margin: 0; background: var(--bg); }
 .ac-hero__foto { grid-column: 1 / 5; grid-row: 2 / 4; margin-top: var(--space-5); }
 .ac-hero__l2 { grid-column: 4 / 9; grid-row: 2; margin: -1px 0 0; justify-self: start; position: relative; z-index: 1; }
 .ac-hero__bajada { grid-column: 6 / 13; grid-row: 3; padding-top: var(--space-5); margin: 0; }
+/* Con tarjeta de dato la bajada termina antes de la columna de la tarjeta, así no la tapa */
+.ac-hero__kpi ~ .ac-hero__bajada { grid-column: 6 / 10; }
 
 /* Foto del campo: bloque de color hasta tener fotos reales */
 .ac-foto { border-radius: var(--radius-md); overflow: hidden; min-height: 240px; background: var(--forest); }
